@@ -1,0 +1,638 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "story-state-v1.schema.json",
+  "title": "Explicit typed story state",
+  "description": "Create, revise or inspect immutable local story-state snapshots. Runtime additionally validates UTF-8 byte limits, evidence spans/digests, exact project scope, unique entry IDs, established slot conflicts and CAS. Generated entries remain proposals. The local user_authorized API argument acknowledges existing user authority and is not a deserializable service credential. No World authority is changed.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/create"
+    },
+    {
+      "$ref": "#/$defs/revision"
+    },
+    {
+      "$ref": "#/$defs/snapshot"
+    }
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "recordReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "project_id",
+        "record_id",
+        "version_id",
+        "sha256"
+      ],
+      "properties": {
+        "contract": {
+          "const": "creative-records/1"
+        },
+        "project_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "record_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "version_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "start",
+        "end",
+        "sha256"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777215
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "subject",
+        "value",
+        "status",
+        "origin",
+        "evidence",
+        "tags"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "kind": {
+          "enum": [
+            "knowledge",
+            "location",
+            "time",
+            "resource",
+            "relationship",
+            "open-question",
+            "purpose"
+          ]
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "\\S"
+        },
+        "value": {
+          "type": "object"
+        },
+        "status": {
+          "enum": [
+            "user_constraint",
+            "proposal",
+            "adopted_fact"
+          ]
+        },
+        "origin": {
+          "enum": [
+            "user",
+            "generated"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "knowledge"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "holder",
+                  "topic",
+                  "claim"
+                ],
+                "properties": {
+                  "holder": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "topic": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "claim": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "location"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "entity",
+                  "place"
+                ],
+                "properties": {
+                  "entity": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "place": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "time"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "event",
+                  "position"
+                ],
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "position": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "resource"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "holder",
+                  "resource",
+                  "amount",
+                  "unit"
+                ],
+                "properties": {
+                  "holder": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "resource": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "minimum": -1000000000,
+                    "maximum": 1000000000
+                  },
+                  "unit": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "relationship"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "source",
+                  "target",
+                  "relation"
+                ],
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "target": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "relation": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "open-question"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "question",
+                  "options",
+                  "resolution"
+                ],
+                "properties": {
+                  "question": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "options": {
+                    "type": "array",
+                    "maxItems": 8,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1024,
+                      "pattern": "\\S"
+                    }
+                  },
+                  "resolution": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096,
+                        "pattern": "\\S"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "purpose"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "chapter",
+                  "aim",
+                  "open_choices"
+                ],
+                "properties": {
+                  "chapter": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 20000
+                  },
+                  "aim": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "\\S"
+                  },
+                  "open_choices": {
+                    "type": "array",
+                    "maxItems": 8,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1024,
+                      "pattern": "\\S"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "origin": {
+                "const": "generated"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "proposal"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "user_constraint",
+                  "adopted_fact"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "origin": {
+                "const": "user"
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "create": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "state_id",
+        "project_id",
+        "operation_id",
+        "entries"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "writing-assistant-story-state-request/1"
+        },
+        "state_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "project_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "operation_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "entries": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/entry"
+          }
+        }
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "operation_id",
+        "upsert",
+        "remove",
+        "reason",
+        "evidence"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "writing-assistant-story-state-revision/1"
+        },
+        "operation_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "upsert": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/entry"
+          }
+        },
+        "remove": {
+          "type": "array",
+          "maxItems": 128,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+          }
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "\\S"
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "project_id",
+        "state_id",
+        "revision",
+        "previous",
+        "request",
+        "entries"
+      ],
+      "properties": {
+        "contract": {
+          "const": "writing-assistant-story-state/1"
+        },
+        "project_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "state_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "previous": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/recordReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "request": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/create"
+            },
+            {
+              "$ref": "#/$defs/revision"
+            }
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/entry"
+          }
+        }
+      }
+    }
+  }
+}

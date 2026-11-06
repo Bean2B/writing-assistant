@@ -1,0 +1,428 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Writing Assistant evidence-linked review decision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "target",
+    "original_output",
+    "review_text",
+    "outcome",
+    "observations",
+    "choices",
+    "verification",
+    "literary_correctness"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "writing-assistant-review-decision/1"
+    },
+    "target": {
+      "$ref": "#/$defs/reference"
+    },
+    "original_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "sha256"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 131072,
+          "x-maxUtf8Bytes": 131072,
+          "pattern": "\\S"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "review_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32768,
+      "x-maxUtf8Bytes": 32768,
+      "pattern": "\\S"
+    },
+    "outcome": {
+      "enum": [
+        "concerns",
+        "no-concerns"
+      ]
+    },
+    "observations": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "$ref": "#/$defs/observation"
+      }
+    },
+    "choices": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/$defs/choice"
+      }
+    },
+    "verification": {
+      "const": "targets-and-evidence-verified"
+    },
+    "literary_correctness": {
+      "const": "not-mechanically-determined"
+    }
+  },
+  "x-maxUtf8Bytes": 524288,
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "maxLength": 96,
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "project_id",
+        "record_id",
+        "version_id",
+        "sha256"
+      ],
+      "properties": {
+        "contract": {
+          "const": "creative-records/1"
+        },
+        "project_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "record_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "span": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "byte_start",
+        "byte_end",
+        "quote"
+      ],
+      "properties": {
+        "byte_start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777216
+        },
+        "byte_end": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192,
+          "x-maxUtf8Bytes": 8192,
+          "pattern": "\\S"
+        }
+      }
+    },
+    "quote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "quote"
+      ],
+      "properties": {
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192,
+          "x-maxUtf8Bytes": 8192,
+          "pattern": "\\S"
+        },
+        "occurrence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        }
+      }
+    },
+    "choice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id",
+        "disposition",
+        "reason"
+      ],
+      "properties": {
+        "observation_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "disposition": {
+          "enum": [
+            "accepted",
+            "rejected",
+            "deferred"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "x-maxUtf8Bytes": 4096,
+          "pattern": "\\S"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "material_id",
+        "ref",
+        "span"
+      ],
+      "properties": {
+        "material_id": {
+          "type": "string",
+          "pattern": "^(target|evidence-([1-9][0-9]?))$"
+        },
+        "ref": {
+          "$ref": "#/$defs/reference"
+        },
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "selected_range": {
+          "$ref": "#/$defs/selectedRange"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id",
+        "span",
+        "observation",
+        "classification",
+        "impact",
+        "proposed_change",
+        "evidence",
+        "disposition",
+        "user_choice"
+      ],
+      "properties": {
+        "observation_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "observation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "x-maxUtf8Bytes": 4096,
+          "pattern": "\\S"
+        },
+        "classification": {
+          "enum": [
+            "confirmed-contradiction",
+            "uncertainty",
+            "preference"
+          ]
+        },
+        "impact": {
+          "enum": [
+            "material",
+            "minor"
+          ]
+        },
+        "proposed_change": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "x-maxUtf8Bytes": 4096,
+          "pattern": "\\S"
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "disposition": {
+          "enum": [
+            "proposed",
+            "accepted",
+            "rejected",
+            "deferred"
+          ]
+        },
+        "user_choice": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/choice"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "modelObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id",
+        "span",
+        "observation",
+        "classification",
+        "impact",
+        "proposed_change",
+        "evidence"
+      ],
+      "properties": {
+        "observation_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "span": {
+          "$ref": "#/$defs/quote"
+        },
+        "observation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "x-maxUtf8Bytes": 4096,
+          "pattern": "\\S"
+        },
+        "classification": {
+          "enum": [
+            "confirmed-contradiction",
+            "uncertainty",
+            "preference"
+          ]
+        },
+        "impact": {
+          "enum": [
+            "material",
+            "minor"
+          ]
+        },
+        "proposed_change": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "x-maxUtf8Bytes": 4096,
+          "pattern": "\\S"
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "material_id",
+              "quote"
+            ],
+            "properties": {
+              "material_id": {
+                "type": "string",
+                "pattern": "^(target|evidence-([1-9][0-9]?))$"
+              },
+              "quote": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192,
+                "x-maxUtf8Bytes": 8192,
+                "pattern": "\\S"
+              },
+              "occurrence": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4096
+              }
+            }
+          }
+        }
+      }
+    },
+    "modelOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "review_text",
+        "outcome",
+        "observations"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "writing-assistant-review-output/1"
+        },
+        "review_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32768,
+          "x-maxUtf8Bytes": 32768,
+          "pattern": "\\S"
+        },
+        "outcome": {
+          "enum": [
+            "concerns",
+            "no-concerns"
+          ]
+        },
+        "observations": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/modelObservation"
+          }
+        }
+      }
+    },
+    "selectedRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "byte_start",
+        "byte_end"
+      ],
+      "properties": {
+        "byte_start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777216
+        },
+        "byte_end": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        }
+      }
+    }
+  },
+  "$comment": "Runtime validation additionally checks original-output digests; source ref identity and exact original body hashes; UTF-8 literal quote positions; nonempty cited evidence for reviewer-asserted contradictions; unique observation IDs; outcome consistency; and append-only choice history. Verification checks identity and evidence bytes, never semantic truth, literary quality, user authority, or content adoption. modelOutput describes the strict model response before application-resolved spans and references."
+}

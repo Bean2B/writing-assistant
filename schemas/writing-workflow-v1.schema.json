@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "writing-workflow-v1.schema.json",
+  "title": "Bounded writing workflow request",
+  "description": "An explicit user goal and chapter bound authorize local task preparation. Only task execute dispatches models. Generated content, review and workflow completion do not adopt content or establish world facts.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "workflow_id",
+    "project_id",
+    "goal",
+    "chapters"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "writing-assistant-workflow-request/1"
+    },
+    "workflow_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "project_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384,
+      "description": "Non-whitespace goal, at most 16384 UTF-8 bytes. Chapter purposes are derived from this goal and selected current context, without per-chapter caller prompts."
+    },
+    "chapters": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20
+    },
+    "bindings": {
+      "type": "array",
+      "maxItems": 8,
+      "default": [],
+      "description": "The complete explicitly permitted seed set. URIs label exact selected record versions and do not authorize file or project discovery. No implicit latest-version selection occurs.",
+      "items": {
+        "type": "object",
+        "required": [
+          "uri",
+          "ref"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "uri": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "ref": {
+            "$ref": "#/$defs/recordReference"
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Selected stages execute once. New reviews require structured companions; the separate review_policy controls material branching. Explicit revise selects one user-requested revision. Plan-scene requires Lotus.",
+      "properties": {
+        "concept": {
+          "type": "boolean",
+          "default": false
+        },
+        "plan_scene": {
+          "type": "boolean"
+        },
+        "reader_review": {
+          "type": "boolean",
+          "default": true
+        },
+        "continuity_review": {
+          "type": "boolean",
+          "default": true
+        },
+        "revise": {
+          "type": "boolean",
+          "default": false
+        },
+        "recent_chapters": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4,
+          "default": 2
+        }
+      }
+    },
+    "techniques": {
+      "type": "array",
+      "maxItems": 8,
+      "default": [],
+      "description": "Optional explicit exact bundled pack selections. Empty selection loads no technique pack. Pack guidance remains textual guidance; deterministic workflow checks do not judge literary quality.",
+      "items": {
+        "type": "object",
+        "required": [
+          "pack_id",
+          "pack_version",
+          "pack_sha256",
+          "technique_ids"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "pack_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+          },
+          "pack_version": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,5})\\.(0|[1-9][0-9]{0,5})\\.(0|[1-9][0-9]{0,5})$"
+          },
+          "pack_sha256": {
+            "$ref": "#/$defs/sha256"
+          },
+          "technique_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 16,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            }
+          }
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Each optional field can only lower the per-task byte bound. Exceeding selected material bounds refuses preparation without truncation. Total task calls and byte ceilings are derived from the selected finite stage schedule; they are not provider token or cost guarantees.",
+      "properties": {
+        "max_material_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 262144,
+          "default": 262144
+        },
+        "max_prompt_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 524288,
+          "default": 524288
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 262144,
+          "default": 262144
+        }
+      }
+    },
+    "review_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Structured review policy. Only unresolved material confirmed-contradiction claims trigger branching. Preferences and uncertainty are advisory. One revision maximum per chapter.",
+      "properties": {
+        "material_action": {
+          "enum": [
+            "advisory",
+            "hold",
+            "revise"
+          ],
+          "default": "advisory"
+        },
+        "max_revisions": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1
+        }
+      }
+    },
+    "purpose": {
+      "type": "object",
+      "required": [
+        "aim",
+        "open_choices"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "aim": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16384
+        },
+        "open_choices": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "required": [
+            "ref"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "ref": {
+              "$ref": "#/$defs/recordReference"
+            },
+            "entry_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 128
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 16
+            }
+          }
+        },
+        "earlier_prose": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "required": [
+              "ref",
+              "reason"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "$ref": "#/$defs/recordReference"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024
+              },
+              "tags": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "span": {
+                "type": "object",
+                "required": [
+                  "start",
+                  "end",
+                  "sha256"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "start": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "end": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "sha256": {
+                    "$ref": "#/$defs/sha256"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "string"
+          }
+        },
+        "max_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 262144
+        },
+        "max_items": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24
+        }
+      }
+    },
+    "start_chapter": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20000,
+      "default": 1,
+      "description": "First actual chapter number. start_chapter + chapters - 1 cannot exceed 20000."
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "recordReference": {
+      "type": "object",
+      "required": [
+        "contract",
+        "project_id",
+        "record_id",
+        "version_id",
+        "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "const": "creative-records/1"
+        },
+        "project_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "record_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "version_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

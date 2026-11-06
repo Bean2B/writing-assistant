@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Immutable diagnostic revision changes v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "confidence": {
+      "enum": [
+        "unknown",
+        "hypothesis",
+        "confirmed",
+        null
+      ]
+    },
+    "disposition": {
+      "enum": [
+        "advisory",
+        "blocker",
+        null
+      ]
+    },
+    "status": {
+      "enum": [
+        "open",
+        "resolved",
+        "withdrawn",
+        null
+      ]
+    },
+    "diagnosis": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "resolution": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "summary": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "expires_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "context": {
+      "anyOf": [
+        {
+          "$ref": "diagnostic-capture-v1.schema.json#/$defs/context"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "event": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "note",
+            "result"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "diagnosis",
+                "verification",
+                "resolution",
+                "observation"
+              ]
+            },
+            "note": {
+              "type": "string"
+            },
+            "result": {
+              "enum": [
+                null,
+                "pass",
+                "fail",
+                "inconclusive"
+              ]
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "secrets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 64
+    }
+  },
+  "$comment": "Exact latest reference is supplied separately; stale updates conflict. Optional --evidence selects new UTF-8 evidence. Runtime DiagnosticStore semantics are authoritative; this schema does not authorize a retry or prune."
+}

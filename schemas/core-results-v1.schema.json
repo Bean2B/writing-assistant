@@ -1,0 +1,6476 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "writing-assistant-core-results/1",
+  "title": "Core Agent workflow CLI results v1",
+  "$defs": {
+    "techniqueSelection": {
+      "type": "object",
+      "properties": {
+        "pack_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        "pack_version": {
+          "type": "string",
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        },
+        "pack_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "technique_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+          },
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "pack_id",
+        "pack_version",
+        "pack_sha256",
+        "technique_ids"
+      ],
+      "additionalProperties": false
+    },
+    "writingTechnique": {
+      "type": "object",
+      "properties": {
+        "technique_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "concept",
+              "draft",
+              "plan-scene",
+              "reader-review",
+              "continuity-review",
+              "revise"
+            ]
+          },
+          "maxItems": 6
+        },
+        "applies_when": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "guidance": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1024
+          },
+          "maxItems": 8
+        },
+        "review_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 1024
+          },
+          "maxItems": 8
+        },
+        "applicability": {
+          "type": "object",
+          "properties": {
+            "tasks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+              },
+              "maxItems": 8
+            },
+            "story_tags": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+              },
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "tasks",
+            "story_tags"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "technique_id",
+        "title",
+        "phases",
+        "applies_when",
+        "guidance",
+        "limitations",
+        "review_criteria"
+      ],
+      "additionalProperties": false
+    },
+    "techniquePackMetadata": {
+      "type": "object",
+      "properties": {
+        "pack_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        "pack_version": {
+          "type": "string",
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "concept",
+              "draft",
+              "plan-scene",
+              "reader-review",
+              "continuity-review",
+              "revise"
+            ]
+          },
+          "maxItems": 6
+        },
+        "technique_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+          },
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "pack_id",
+        "pack_version",
+        "title",
+        "summary",
+        "sha256",
+        "phases",
+        "technique_ids"
+      ],
+      "additionalProperties": false
+    },
+    "techniquePack": {
+      "type": "object",
+      "properties": {
+        "pack_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        "pack_version": {
+          "type": "string",
+          "maxLength": 32,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "schema_version": {
+          "enum": [
+            "writing-assistant-technique-pack/1"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "guidance": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "phase_guidance": {
+          "type": "object",
+          "properties": {
+            "concept": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "draft": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "plan-scene": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "reader-review": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "continuity-review": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "revise": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "concept",
+            "draft",
+            "plan-scene",
+            "reader-review",
+            "continuity-review",
+            "revise"
+          ],
+          "additionalProperties": false
+        },
+        "techniques": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/writingTechnique"
+          },
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "pack_id",
+        "pack_version",
+        "title",
+        "summary",
+        "schema_version",
+        "sha256",
+        "guidance",
+        "phase_guidance",
+        "techniques"
+      ],
+      "additionalProperties": false
+    },
+    "techniqueSnapshot": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            "writing-assistant-techniques/1"
+          ]
+        },
+        "phase": {
+          "enum": [
+            "concept",
+            "draft",
+            "plan-scene",
+            "reader-review",
+            "continuity-review",
+            "revise"
+          ]
+        },
+        "packs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pack_id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+              },
+              "pack_version": {
+                "type": "string",
+                "maxLength": 32,
+                "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+              },
+              "pack_sha256": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "guidance": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "phase_guidance": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "techniques": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/writingTechnique"
+                },
+                "maxItems": 16
+              }
+            },
+            "required": [
+              "pack_id",
+              "pack_version",
+              "pack_sha256",
+              "title",
+              "guidance",
+              "phase_guidance",
+              "techniques"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "schema_version",
+        "phase",
+        "packs"
+      ],
+      "additionalProperties": false
+    },
+    "techniqueCatalog": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-assistant-technique-catalog/1"
+          ]
+        },
+        "packs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/techniquePackMetadata"
+          },
+          "maxItems": 32
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "packs",
+        "model_calls"
+      ],
+      "additionalProperties": false
+    },
+    "techniqueView": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-assistant-technique-view/1"
+          ]
+        },
+        "pack": {
+          "$ref": "#/$defs/techniquePack"
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "pack",
+        "model_calls"
+      ],
+      "additionalProperties": false
+    },
+    "techniqueSuggestions": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-assistant-technique-suggestions/1"
+          ]
+        },
+        "phase": {
+          "enum": [
+            "concept",
+            "draft",
+            "plan-scene",
+            "reader-review",
+            "continuity-review",
+            "revise"
+          ]
+        },
+        "task": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        "story_tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+          },
+          "maxItems": 16
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pack_id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+              },
+              "pack_version": {
+                "type": "string",
+                "maxLength": 32,
+                "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+              },
+              "pack_sha256": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "technique_id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "matched_tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "maxItems": 16
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "maxItems": 8
+              }
+            },
+            "required": [
+              "pack_id",
+              "pack_version",
+              "pack_sha256",
+              "technique_id",
+              "title",
+              "matched_tags",
+              "reasons"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 3
+        },
+        "suggested_selection": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/techniqueSelection"
+          },
+          "maxItems": 3
+        },
+        "omitted_matches": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "selection_applied": {
+          "enum": [
+            false
+          ]
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "phase",
+        "task",
+        "story_tags",
+        "limit",
+        "suggestions",
+        "suggested_selection",
+        "omitted_matches",
+        "selection_applied",
+        "model_calls"
+      ],
+      "additionalProperties": false
+    },
+    "recordReference": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "creative-records/1"
+          ]
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "record_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "version_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "contract",
+        "project_id",
+        "record_id",
+        "version_id",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "halfOpenRange": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "recordListItem": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "kind": {
+          "enum": [
+            "idea",
+            "fragment",
+            "draft",
+            "setting",
+            "decision",
+            "feedback",
+            "prose"
+          ]
+        },
+        "work_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 96,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "received_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 128
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "authorship": {
+              "enum": [
+                "user",
+                "agent",
+                "mixed",
+                "unknown"
+              ]
+            },
+            "origin": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "authorship",
+            "origin"
+          ],
+          "additionalProperties": false
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/recordReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "related": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordReference"
+          },
+          "maxItems": 64
+        },
+        "excerpt": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "excerpt_complete": {
+          "type": "boolean"
+        },
+        "excerpt_range": {
+          "$ref": "#/$defs/halfOpenRange"
+        }
+      },
+      "required": [
+        "ref",
+        "title",
+        "kind",
+        "work_id",
+        "received_at",
+        "source",
+        "parent",
+        "related"
+      ],
+      "additionalProperties": false
+    },
+    "recordMetadata": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "creative-records/1"
+          ]
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "record_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "version_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "operation_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "kind": {
+          "enum": [
+            "idea",
+            "fragment",
+            "draft",
+            "setting",
+            "decision",
+            "feedback",
+            "prose"
+          ]
+        },
+        "work_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 96,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "authorship": {
+              "enum": [
+                "user",
+                "agent",
+                "mixed",
+                "unknown"
+              ]
+            },
+            "origin": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "authorship",
+            "origin"
+          ],
+          "additionalProperties": false
+        },
+        "audiences": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 96,
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+          }
+        },
+        "original_created_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "received_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 128
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/recordReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "related": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordReference"
+          },
+          "maxItems": 64
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "storage": {
+              "enum": [
+                "inline",
+                "reference"
+              ]
+            },
+            "sha256": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 16777216
+            },
+            "reference": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "producer": {
+                      "type": "string",
+                      "maxLength": 96,
+                      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+                    },
+                    "version": {
+                      "type": "string",
+                      "maxLength": 128
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  },
+                  "required": [
+                    "producer",
+                    "version",
+                    "path",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "storage",
+            "sha256",
+            "size",
+            "reference"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "project_id",
+        "record_id",
+        "version_id",
+        "operation_id",
+        "title",
+        "kind",
+        "work_id",
+        "source",
+        "audiences",
+        "original_created_at",
+        "received_at",
+        "parent",
+        "related",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "recordWriteReceipt": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "created",
+            "retry"
+          ]
+        },
+        "ref": {
+          "$ref": "#/$defs/recordReference"
+        }
+      },
+      "required": [
+        "status",
+        "ref"
+      ],
+      "additionalProperties": false
+    },
+    "recordReadReceipt": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "saved-original"
+          ]
+        },
+        "ref": {
+          "$ref": "#/$defs/recordReference"
+        }
+      },
+      "required": [
+        "status",
+        "ref"
+      ],
+      "additionalProperties": false
+    },
+    "recordShow": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "metadata": {
+          "$ref": "#/$defs/recordMetadata"
+        },
+        "body_base64": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "maxLength": 22369624
+        }
+      },
+      "required": [
+        "ref",
+        "metadata",
+        "body_base64"
+      ],
+      "additionalProperties": false
+    },
+    "recordPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordListItem"
+          },
+          "maxItems": 200
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "range": {
+          "$ref": "#/$defs/halfOpenRange"
+        },
+        "originals_truncated": {
+          "enum": [
+            false
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "total",
+        "next_cursor",
+        "range",
+        "originals_truncated"
+      ],
+      "additionalProperties": false
+    },
+    "recordLegacyList": {
+      "type": "object",
+      "properties": {
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordMetadata"
+          }
+        }
+      },
+      "required": [
+        "versions"
+      ],
+      "additionalProperties": false
+    },
+    "recordList": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/recordLegacyList"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "versions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/recordMetadata"
+              },
+              "maxItems": 200
+            },
+            "total": {
+              "enum": [
+                null
+              ]
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 512
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "range": {
+              "$ref": "#/$defs/halfOpenRange"
+            },
+            "originals_truncated": {
+              "enum": [
+                false
+              ]
+            },
+            "scan": {
+              "type": "object",
+              "properties": {
+                "scanned": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "complete": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "scanned",
+                "complete"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "versions",
+            "total",
+            "next_cursor",
+            "range",
+            "originals_truncated",
+            "scan"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "recordSearchPage": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/recordPage"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/recordListItem"
+              },
+              "maxItems": 200
+            },
+            "total": {
+              "enum": [
+                null
+              ]
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 512
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "range": {
+              "$ref": "#/$defs/halfOpenRange"
+            },
+            "originals_truncated": {
+              "enum": [
+                false
+              ]
+            },
+            "scan": {
+              "type": "object",
+              "properties": {
+                "scanned": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "complete": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "scanned",
+                "complete"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "items",
+            "total",
+            "next_cursor",
+            "range",
+            "originals_truncated",
+            "scan"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "recordLegacyHistory": {
+      "type": "object",
+      "properties": {
+        "record_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "versions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordListItem"
+          }
+        },
+        "latest_stored": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "continuation_selection": {
+          "enum": [
+            null
+          ]
+        },
+        "adoption": {
+          "enum": [
+            "not_determined_by_records"
+          ]
+        }
+      },
+      "required": [
+        "record_id",
+        "versions",
+        "latest_stored",
+        "continuation_selection",
+        "adoption"
+      ],
+      "additionalProperties": false
+    },
+    "recordHistory": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/recordLegacyHistory"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "record_id": {
+              "type": "string",
+              "maxLength": 96,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+            },
+            "versions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/recordListItem"
+              },
+              "maxItems": 200
+            },
+            "latest_stored": {
+              "$ref": "#/$defs/recordReference"
+            },
+            "continuation_selection": {
+              "enum": [
+                null
+              ]
+            },
+            "adoption": {
+              "enum": [
+                "not_determined_by_records"
+              ]
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 512
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "range": {
+              "$ref": "#/$defs/halfOpenRange"
+            },
+            "originals_truncated": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "record_id",
+            "versions",
+            "latest_stored",
+            "continuation_selection",
+            "adoption",
+            "total",
+            "next_cursor",
+            "range",
+            "originals_truncated"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "recordIndexReceipt": {
+      "type": "object",
+      "properties": {
+        "index_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "versions": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "index_sha256",
+        "versions"
+      ],
+      "additionalProperties": false
+    },
+    "recordRoutesReceipt": {
+      "type": "object",
+      "properties": {
+        "versions": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "versions"
+      ],
+      "additionalProperties": false
+    },
+    "bookmarkReference": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "creative-continuation/1"
+          ]
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "bookmark_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "contract",
+        "project_id",
+        "bookmark_id",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "bookmarkWriteReceipt": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "created",
+            "retry"
+          ]
+        },
+        "bookmark": {
+          "$ref": "#/$defs/bookmarkReference"
+        }
+      },
+      "required": [
+        "status",
+        "bookmark"
+      ],
+      "additionalProperties": false
+    },
+    "bookmark": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "creative-continuation/1"
+          ]
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "bookmark_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "operation_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "request_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "received_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 128
+        },
+        "audience": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "selected": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "stop": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordReference"
+          },
+          "maxItems": 128
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "source": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/recordReference"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "text",
+              "source"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 128
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "$ref": "#/$defs/recordReference"
+              },
+              "range": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/halfOpenRange"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ref",
+              "range"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 128
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "project_id",
+        "bookmark_id",
+        "operation_id",
+        "request_sha256",
+        "received_at",
+        "audience",
+        "selected",
+        "stop",
+        "decisions",
+        "questions",
+        "materials",
+        "baseline"
+      ],
+      "additionalProperties": false
+    },
+    "bookmarkPage": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "creative-continuation/1"
+          ]
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "audience": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bookmark": {
+                "$ref": "#/$defs/bookmarkReference"
+              },
+              "selected": {
+                "$ref": "#/$defs/recordReference"
+              },
+              "received_at": {
+                "type": "string",
+                "format": "date-time",
+                "maxLength": 128
+              },
+              "operation_id": {
+                "type": "string",
+                "maxLength": 96,
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+              },
+              "stop": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "baseline": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 256
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "bookmark",
+              "selected",
+              "received_at",
+              "operation_id",
+              "stop",
+              "baseline"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 200
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "more_available": {
+          "type": "boolean"
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "project_id",
+        "audience",
+        "items",
+        "total",
+        "more_available",
+        "model_calls"
+      ],
+      "additionalProperties": false
+    },
+    "continuationContext": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "creative-continuation/1"
+          ]
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "audience": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "bookmark": {
+          "$ref": "#/$defs/bookmarkReference"
+        },
+        "selected": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "stop": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "offset_unit": {
+          "enum": [
+            "unicode_code_points_utf8_including_bom"
+          ]
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "source": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/recordReference"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "text",
+              "source"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 128
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pieces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "$ref": "#/$defs/recordReference"
+              },
+              "range": {
+                "$ref": "#/$defs/halfOpenRange"
+              },
+              "purpose": {
+                "enum": [
+                  "selected_draft",
+                  "decision",
+                  "explicit_material",
+                  "question_source"
+                ]
+              },
+              "uses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "purpose": {
+                      "enum": [
+                        "selected_draft",
+                        "decision",
+                        "explicit_material",
+                        "question_source"
+                      ]
+                    },
+                    "question_index": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "purpose"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 129
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 16777216
+              },
+              "complete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "ref",
+              "range",
+              "purpose",
+              "uses",
+              "text",
+              "complete"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 129
+        },
+        "omissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "$ref": "#/$defs/recordReference"
+              },
+              "included_range": {
+                "$ref": "#/$defs/halfOpenRange"
+              }
+            },
+            "required": [
+              "ref",
+              "included_range"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 129
+        },
+        "adoption": {
+          "enum": [
+            "not_determined_by_records"
+          ]
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "project_id",
+        "audience",
+        "bookmark",
+        "selected",
+        "stop",
+        "offset_unit",
+        "questions",
+        "baseline",
+        "pieces",
+        "omissions",
+        "adoption",
+        "model_calls"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticReference": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-diagnostics/1"
+          ]
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "bucket": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "case_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "contract",
+        "project_id",
+        "bucket",
+        "case_id",
+        "revision",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticEvidence": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "original_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "original_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "redacted": {
+          "type": "boolean"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "exact_original": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "revision",
+        "sha256",
+        "original_sha256",
+        "bytes",
+        "original_bytes",
+        "redacted",
+        "truncated",
+        "exact_original"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticSummary": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/diagnosticReference"
+        },
+        "component": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "operation": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "signature": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "fingerprint": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "confidence": {
+          "enum": [
+            "unknown",
+            "hypothesis",
+            "confirmed"
+          ]
+        },
+        "disposition": {
+          "enum": [
+            "advisory",
+            "blocker"
+          ]
+        },
+        "status": {
+          "enum": [
+            "open",
+            "resolved",
+            "withdrawn"
+          ]
+        },
+        "expires_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "summary": {
+          "enum": [
+            "Locally retained diagnostic case."
+          ]
+        }
+      },
+      "required": [
+        "ref",
+        "component",
+        "operation",
+        "category",
+        "signature",
+        "fingerprint",
+        "confidence",
+        "disposition",
+        "status",
+        "expires_at",
+        "summary"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticBinding": {
+      "type": "object",
+      "properties": {
+        "project_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "component": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "operation": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "revision": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "branch": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "worktree": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "code_state": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "configuration": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "trigger": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "environment",
+              "code_state",
+              "inputs",
+              "configuration",
+              "trigger",
+              "revision",
+              "branch",
+              "worktree"
+            ]
+          },
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "project_id",
+        "component",
+        "operation",
+        "category",
+        "revision",
+        "branch",
+        "worktree",
+        "environment",
+        "code_state",
+        "inputs",
+        "configuration",
+        "trigger",
+        "missing"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticWriteReceipt": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "created",
+            "existing",
+            "revised"
+          ]
+        },
+        "ref": {
+          "$ref": "#/$defs/diagnosticReference"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnosticEvidence"
+          },
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "status",
+        "ref",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticMetadata": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-diagnostics/1"
+          ]
+        },
+        "case": {
+          "$ref": "#/$defs/diagnosticSummary"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnosticEvidence"
+          },
+          "maxItems": 16
+        },
+        "binding": {
+          "$ref": "#/$defs/diagnosticBinding"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/diagnosticReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "event": {
+          "enum": [
+            null
+          ]
+        },
+        "diagnosis": {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "enum": [
+                "unknown",
+                "hypothesis",
+                "confirmed"
+              ]
+            },
+            "summary": {
+              "enum": [
+                "Available by explicit evidence read."
+              ]
+            }
+          },
+          "required": [
+            "confidence",
+            "summary"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "case",
+        "evidence",
+        "binding",
+        "parent",
+        "event",
+        "diagnosis"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticExplicitEvidence": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-diagnostics/1"
+          ]
+        },
+        "case": {
+          "$ref": "#/$defs/diagnosticSummary"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnosticEvidence"
+          },
+          "maxItems": 16
+        },
+        "binding": {
+          "$ref": "#/$defs/diagnosticBinding"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/diagnosticReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "event": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "diagnosis",
+                    "verification",
+                    "resolution",
+                    "observation"
+                  ]
+                },
+                "note": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "result": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "pass",
+                        "fail",
+                        "inconclusive"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "maxLength": 64
+                },
+                "fingerprint": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "kind",
+                "note",
+                "result",
+                "at",
+                "fingerprint"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "diagnosis": {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "enum": [
+                "unknown",
+                "hypothesis",
+                "confirmed"
+              ]
+            },
+            "summary": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "required": [
+            "confidence",
+            "summary"
+          ],
+          "additionalProperties": false
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "resolution": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "contents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 256
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "exact_original": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "revision",
+              "text",
+              "exact_original"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "contract",
+        "case",
+        "evidence",
+        "binding",
+        "parent",
+        "event",
+        "diagnosis",
+        "summary",
+        "resolution",
+        "contents"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticShow": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/diagnosticMetadata"
+        },
+        {
+          "$ref": "#/$defs/diagnosticExplicitEvidence"
+        }
+      ]
+    },
+    "diagnosticPreflight": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-diagnostics/1"
+          ]
+        },
+        "blocking": {
+          "type": "boolean"
+        },
+        "matches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ref": {
+                "$ref": "#/$defs/diagnosticReference"
+              },
+              "component": {
+                "type": "string",
+                "maxLength": 96,
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+              },
+              "operation": {
+                "type": "string",
+                "maxLength": 96,
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+              },
+              "category": {
+                "type": "string",
+                "maxLength": 96,
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+              },
+              "signature": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "fingerprint": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "confidence": {
+                "enum": [
+                  "unknown",
+                  "hypothesis",
+                  "confirmed"
+                ]
+              },
+              "disposition": {
+                "enum": [
+                  "advisory",
+                  "blocker"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "open",
+                  "resolved",
+                  "withdrawn"
+                ]
+              },
+              "expires_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "maxLength": 64
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "summary": {
+                "enum": [
+                  "Locally retained diagnostic case."
+                ]
+              },
+              "blocking": {
+                "type": "boolean"
+              },
+              "reusable": {
+                "type": "boolean"
+              },
+              "invalidation": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "maxItems": 32
+              },
+              "optional_verification_reusable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "ref",
+              "component",
+              "operation",
+              "category",
+              "signature",
+              "fingerprint",
+              "confidence",
+              "disposition",
+              "status",
+              "expires_at",
+              "summary",
+              "blocking",
+              "reusable",
+              "invalidation",
+              "optional_verification_reusable"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 50
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 96,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coverage": {
+          "enum": [
+            "complete",
+            "degraded"
+          ]
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxItems": 64
+        },
+        "scanned": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "history": {
+          "enum": [
+            "present",
+            "absent",
+            "unavailable"
+          ]
+        },
+        "skipped_checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "maxItems": 64
+        },
+        "retry_authorized": {
+          "enum": [
+            false
+          ]
+        },
+        "decision": {
+          "enum": [
+            "blocked",
+            "reduced_coverage",
+            "advisory",
+            "clear"
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "blocking",
+        "matches",
+        "next_cursor",
+        "coverage",
+        "warnings",
+        "scanned",
+        "history",
+        "skipped_checks",
+        "retry_authorized",
+        "decision"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticPage": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-diagnostics/1"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnosticSummary"
+          },
+          "maxItems": 50
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 96,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "items",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticPending": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-diagnostics/1"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pending_id": {
+                "type": "string",
+                "maxLength": 34,
+                "pattern": "^[pd]-[0-9a-f]{32}$"
+              },
+              "state": {
+                "enum": [
+                  "incomplete",
+                  "retention",
+                  "ready"
+                ]
+              }
+            },
+            "required": [
+              "pending_id",
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 64
+        }
+      },
+      "required": [
+        "contract",
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticPruneReceipt": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "pruned"
+          ]
+        },
+        "case_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        }
+      },
+      "required": [
+        "status",
+        "case_id"
+      ],
+      "additionalProperties": false
+    },
+    "diagnosticRecoveryReceipt": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "discarded"
+              ]
+            },
+            "pending_id": {
+              "type": "string",
+              "maxLength": 34,
+              "pattern": "^[pd]-[0-9a-f]{32}$"
+            }
+          },
+          "required": [
+            "status",
+            "pending_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "recovered"
+              ]
+            },
+            "ref": {
+              "$ref": "#/$defs/diagnosticReference"
+            }
+          },
+          "required": [
+            "status",
+            "ref"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "pruned"
+              ]
+            },
+            "case_id": {
+              "type": "string",
+              "maxLength": 96,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+            }
+          },
+          "required": [
+            "status",
+            "case_id"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "observationSummary": {
+      "type": "object",
+      "properties": {
+        "elapsed": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "unit": {
+              "enum": [
+                "seconds"
+              ]
+            },
+            "scope": {
+              "enum": [
+                "local_codex_adapter_after_qualification"
+              ]
+            }
+          },
+          "required": [
+            "value",
+            "unit",
+            "scope"
+          ],
+          "additionalProperties": false
+        },
+        "usage_status": {
+          "enum": [
+            "reported",
+            "unavailable",
+            "redacted"
+          ]
+        },
+        "cost": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "unknown"
+              ]
+            },
+            "amount": {
+              "enum": [
+                null
+              ]
+            },
+            "currency": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "status",
+            "amount",
+            "currency"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "elapsed",
+        "usage_status",
+        "cost"
+      ],
+      "additionalProperties": false
+    },
+    "taskReceipt": {
+      "type": "object",
+      "properties": {
+        "plan_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "enum": [
+            "prepared",
+            "uncertain",
+            "model_recorded",
+            "result_incomplete",
+            "completed",
+            "model_failed",
+            "materialization_conflict",
+            "blocked"
+          ]
+        },
+        "model_status": {
+          "enum": [
+            "not_dispatched",
+            "unknown",
+            "completed",
+            "codex_missing",
+            "capability_unsupported",
+            "codex_model_failure",
+            "codex_timeout",
+            "codex_cancelled",
+            "codex_malformed",
+            "codex_unknown"
+          ]
+        },
+        "materialization_status": {
+          "enum": [
+            "not_started",
+            "pending",
+            "completed",
+            "not_applicable",
+            "conflict"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "references": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/recordReference"
+          }
+        },
+        "observation": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "content": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "provenance": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "relation_record": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "adopted": {
+          "enum": [
+            false
+          ]
+        },
+        "usage": {},
+        "model_observed": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model_requested": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "local_process_stopped": {
+          "type": "boolean"
+        },
+        "backend_stop_confirmed": {
+          "type": "boolean"
+        },
+        "observation_summary": {
+          "$ref": "#/$defs/observationSummary"
+        }
+      },
+      "required": [
+        "plan_sha256",
+        "state",
+        "model_status",
+        "materialization_status",
+        "status"
+      ],
+      "additionalProperties": true
+    },
+    "localRuntime": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "local_operation_active",
+            "no_local_operation_observed",
+            "unknown"
+          ]
+        },
+        "task_lock": {
+          "enum": [
+            "held",
+            "available",
+            "missing"
+          ]
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 64
+        },
+        "reservation_received_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 64
+        },
+        "seconds_since_reservation": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "backend_status": {
+          "enum": [
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "task_lock",
+        "observed_at",
+        "reservation_received_at",
+        "seconds_since_reservation",
+        "backend_status"
+      ],
+      "additionalProperties": false
+    },
+    "taskOperationTiming": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "recorded"
+          ]
+        },
+        "sample": {
+          "enum": [
+            "first_observed"
+          ]
+        },
+        "operation": {
+          "enum": [
+            "task execute",
+            "task reconcile"
+          ]
+        },
+        "elapsed_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clock": {
+          "enum": [
+            "monotonic"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "local_task_operation_before_timing_persistence"
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "prepared",
+            "blocked",
+            "completed",
+            "model_failed",
+            "materialization_conflict",
+            "model_recorded",
+            "result_incomplete",
+            "uncertain",
+            "error"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-z0-9_]{1,128}$"
+        },
+        "record": {
+          "$ref": "#/$defs/recordReference"
+        }
+      },
+      "required": [
+        "status",
+        "sample",
+        "operation",
+        "elapsed_seconds",
+        "clock",
+        "scope",
+        "outcome",
+        "record"
+      ],
+      "additionalProperties": false
+    },
+    "taskOperationTimings": {
+      "type": "object",
+      "properties": {
+        "preflight": {
+          "$ref": "#/$defs/taskOperationTiming"
+        },
+        "execute": {
+          "$ref": "#/$defs/taskOperationTiming"
+        },
+        "reconcile": {
+          "$ref": "#/$defs/taskOperationTiming"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "taskFullView": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-assistant-task/1"
+          ]
+        },
+        "task_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "attempt_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "plan_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "plan": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "status": {
+          "enum": [
+            "prepared",
+            "uncertain",
+            "model_recorded",
+            "result_incomplete",
+            "completed",
+            "model_failed",
+            "materialization_conflict",
+            "blocked"
+          ]
+        },
+        "model_status": {
+          "enum": [
+            "not_dispatched",
+            "unknown",
+            "completed",
+            "codex_missing",
+            "capability_unsupported",
+            "codex_model_failure",
+            "codex_timeout",
+            "codex_cancelled",
+            "codex_malformed",
+            "codex_unknown"
+          ]
+        },
+        "materialization_status": {
+          "enum": [
+            "not_started",
+            "pending",
+            "completed",
+            "not_applicable",
+            "conflict"
+          ]
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/recordReference"
+          }
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/taskReceipt"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "adopted": {
+          "enum": [
+            false
+          ]
+        },
+        "phase": {
+          "enum": [
+            "concept",
+            "draft",
+            "plan-scene",
+            "reader-review",
+            "continuity-review",
+            "revise"
+          ]
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "uri": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "ref": {
+                "$ref": "#/$defs/recordReference"
+              }
+            },
+            "required": [
+              "uri",
+              "ref"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 32
+        },
+        "ranges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "uri": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "uri",
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 32
+        },
+        "relations": {
+          "type": "object"
+        },
+        "diagnostics": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model_requested": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasoning_effort_requested": {
+          "anyOf": [
+            {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max",
+                "ultra"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "execute",
+              "inspect",
+              "reconcile"
+            ]
+          },
+          "maxItems": 3
+        },
+        "model_calls": {
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "dispatch_attempts": {
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "local_runtime": {
+          "$ref": "#/$defs/localRuntime"
+        },
+        "context": {
+          "type": "object"
+        },
+        "qualification": {
+          "type": "object"
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "operation_timings": {
+          "$ref": "#/$defs/taskOperationTimings"
+        },
+        "timing_recording": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "unavailable"
+              ]
+            },
+            "code": {
+              "enum": [
+                "timing_recording_failed"
+              ]
+            }
+          },
+          "required": [
+            "status",
+            "code"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "task_id",
+        "attempt_id",
+        "plan_sha256",
+        "plan",
+        "status",
+        "model_status",
+        "materialization_status",
+        "evidence",
+        "adopted",
+        "phase",
+        "model_requested",
+        "reasoning_effort_requested",
+        "actions",
+        "model_calls",
+        "result",
+        "bindings",
+        "ranges",
+        "relations",
+        "diagnostics"
+      ],
+      "additionalProperties": true
+    },
+    "taskCompactReceipt": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-assistant-task/1"
+          ]
+        },
+        "task_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "attempt_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "plan_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "plan": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "status": {
+          "enum": [
+            "prepared",
+            "uncertain",
+            "model_recorded",
+            "result_incomplete",
+            "completed",
+            "model_failed",
+            "materialization_conflict",
+            "blocked"
+          ]
+        },
+        "model_status": {
+          "enum": [
+            "not_dispatched",
+            "unknown",
+            "completed",
+            "codex_missing",
+            "capability_unsupported",
+            "codex_model_failure",
+            "codex_timeout",
+            "codex_cancelled",
+            "codex_malformed",
+            "codex_unknown"
+          ]
+        },
+        "materialization_status": {
+          "enum": [
+            "not_started",
+            "pending",
+            "completed",
+            "not_applicable",
+            "conflict"
+          ]
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/recordReference"
+          }
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/taskReceipt"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "adopted": {
+          "enum": [
+            false
+          ]
+        },
+        "phase": {
+          "enum": [
+            "concept",
+            "draft",
+            "plan-scene",
+            "reader-review",
+            "continuity-review",
+            "revise"
+          ]
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "uri": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "ref": {
+                "$ref": "#/$defs/recordReference"
+              }
+            },
+            "required": [
+              "uri",
+              "ref"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 32
+        },
+        "ranges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "uri": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "uri",
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 32
+        },
+        "relations": {
+          "type": "object"
+        },
+        "diagnostics": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model_requested": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasoning_effort_requested": {
+          "anyOf": [
+            {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max",
+                "ultra"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "execute",
+              "inspect",
+              "reconcile"
+            ]
+          },
+          "maxItems": 3
+        },
+        "model_calls": {
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "dispatch_attempts": {
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "local_runtime": {
+          "$ref": "#/$defs/localRuntime"
+        },
+        "context": {
+          "type": "object"
+        },
+        "qualification": {
+          "type": "object"
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "operation_timings": {
+          "$ref": "#/$defs/taskOperationTimings"
+        },
+        "timing_recording": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "unavailable"
+              ]
+            },
+            "code": {
+              "enum": [
+                "timing_recording_failed"
+              ]
+            }
+          },
+          "required": [
+            "status",
+            "code"
+          ],
+          "additionalProperties": false
+        },
+        "view": {
+          "enum": [
+            "compact"
+          ]
+        },
+        "omitted_fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "maxItems": 16
+        },
+        "diagnostics_summary": {
+          "type": "object"
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "inspect_required_bytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "result": {
+              "$ref": "#/$defs/recordReference"
+            },
+            "receipt": {
+              "$ref": "#/$defs/recordReference"
+            },
+            "diagnostics_operation": {
+              "enum": [
+                "task diagnostics"
+              ]
+            }
+          },
+          "required": [
+            "inspect_required_bytes"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "task_id",
+        "attempt_id",
+        "plan_sha256",
+        "plan",
+        "status",
+        "model_status",
+        "materialization_status",
+        "evidence",
+        "adopted",
+        "phase",
+        "model_requested",
+        "reasoning_effort_requested",
+        "actions",
+        "model_calls",
+        "view",
+        "omitted_fields",
+        "details"
+      ],
+      "additionalProperties": true
+    },
+    "taskView": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/taskFullView"
+        },
+        {
+          "$ref": "#/$defs/taskCompactReceipt"
+        }
+      ]
+    },
+    "taskDiagnostics": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-assistant-task-diagnostics/1"
+          ]
+        },
+        "task_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "plan_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "context": {
+          "type": "object"
+        },
+        "preflight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/diagnosticPreflight"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "plan_binding": {
+              "enum": [
+                "verified"
+              ]
+            },
+            "selected_record_metadata": {
+              "enum": [
+                "verified"
+              ]
+            },
+            "selected_content_bytes": {
+              "enum": [
+                "not_read"
+              ]
+            },
+            "external_originals": {
+              "enum": [
+                "not_read"
+              ]
+            },
+            "prompt_bytes": {
+              "enum": [
+                "not_read"
+              ]
+            },
+            "parent_cas": {
+              "enum": [
+                "not_checked"
+              ]
+            }
+          },
+          "required": [
+            "plan_binding",
+            "selected_record_metadata",
+            "selected_content_bytes",
+            "external_originals",
+            "prompt_bytes",
+            "parent_cas"
+          ],
+          "additionalProperties": true
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        },
+        "dispatch_attempts": {
+          "enum": [
+            0
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "task_id",
+        "plan_sha256",
+        "context",
+        "preflight",
+        "validation",
+        "model_calls",
+        "dispatch_attempts"
+      ],
+      "additionalProperties": true
+    },
+    "workflowOutput": {
+      "type": "object",
+      "properties": {
+        "step": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "chapter": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000
+        },
+        "phase": {
+          "enum": [
+            "concept",
+            "draft",
+            "plan-scene",
+            "reader-review",
+            "continuity-review",
+            "revise"
+          ]
+        },
+        "task_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "task_plan": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "receipt": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "content": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "relation_record": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "review_decision": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "review_repair": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "context": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "purpose": {
+          "type": "object",
+          "properties": {
+            "aim": {
+              "type": "string",
+              "maxLength": 16384
+            },
+            "open_choices": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "aim",
+            "open_choices"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "step",
+        "chapter",
+        "phase",
+        "task_id",
+        "task_plan",
+        "receipt",
+        "content",
+        "relation_record"
+      ],
+      "additionalProperties": false
+    },
+    "workflowCurrentTask": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "plan_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "plan": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "chapter": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000
+        },
+        "phase": {
+          "enum": [
+            "concept",
+            "draft",
+            "plan-scene",
+            "reader-review",
+            "continuity-review",
+            "revise"
+          ]
+        },
+        "status": {
+          "enum": [
+            "prepared",
+            "uncertain",
+            "model_recorded",
+            "result_incomplete",
+            "completed",
+            "model_failed",
+            "materialization_conflict",
+            "blocked"
+          ]
+        },
+        "model_status": {
+          "enum": [
+            "not_dispatched",
+            "unknown",
+            "completed",
+            "codex_missing",
+            "capability_unsupported",
+            "codex_model_failure",
+            "codex_timeout",
+            "codex_cancelled",
+            "codex_malformed",
+            "codex_unknown"
+          ]
+        },
+        "materialization_status": {
+          "enum": [
+            "not_started",
+            "pending",
+            "completed",
+            "not_applicable",
+            "conflict"
+          ]
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "execute",
+              "inspect",
+              "reconcile"
+            ]
+          },
+          "maxItems": 3
+        },
+        "context": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "purpose": {
+          "type": "object",
+          "properties": {
+            "aim": {
+              "type": "string",
+              "maxLength": 16384
+            },
+            "open_choices": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "aim",
+            "open_choices"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "task_id",
+        "plan_sha256",
+        "plan",
+        "chapter",
+        "phase",
+        "status",
+        "model_status",
+        "materialization_status",
+        "actions"
+      ],
+      "additionalProperties": false
+    },
+    "writingWorkflow": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-assistant-workflow/1"
+          ]
+        },
+        "workflow_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "plan_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "plan": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "checkpoint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/recordReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "checkpoint_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "awaiting_task",
+            "blocked",
+            "completed"
+          ]
+        },
+        "progress": {
+          "type": "object",
+          "properties": {
+            "completed_steps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 101
+            },
+            "total_steps": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 101
+            },
+            "completed_chapters": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20
+            },
+            "total_chapters": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "prepared_tasks": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 101
+            },
+            "max_model_calls": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 101
+            }
+          },
+          "required": [
+            "completed_steps",
+            "total_steps",
+            "completed_chapters",
+            "total_chapters",
+            "prepared_tasks",
+            "max_model_calls"
+          ],
+          "additionalProperties": false
+        },
+        "current_task": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/workflowCurrentTask"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/workflowOutput"
+          },
+          "maxItems": 101
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "next",
+              "inspect",
+              "task execute",
+              "task inspect",
+              "decide"
+            ]
+          },
+          "maxItems": 2
+        },
+        "review_policy": {
+          "type": "object",
+          "properties": {
+            "material_action": {
+              "enum": [
+                "advisory",
+                "hold",
+                "revise"
+              ]
+            },
+            "max_revisions": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "material_action",
+            "max_revisions"
+          ],
+          "additionalProperties": false
+        },
+        "hold": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "chapter": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20000
+                },
+                "concerns": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "review_decision": {
+                        "$ref": "#/$defs/recordReference"
+                      },
+                      "observation_id": {
+                        "type": "string",
+                        "maxLength": 96,
+                        "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+                      }
+                    },
+                    "required": [
+                      "review_decision",
+                      "observation_id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 64
+                }
+              },
+              "required": [
+                "chapter",
+                "concerns"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordReference"
+          },
+          "maxItems": 64
+        },
+        "updates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordReference"
+          },
+          "maxItems": 64
+        },
+        "review_repairs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/recordReference"
+          },
+          "maxItems": 64
+        },
+        "technique_suggestions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/techniqueSuggestions"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "skipped_steps": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "maxItems": 20
+        },
+        "adopted": {
+          "enum": [
+            false
+          ]
+        },
+        "world_facts_written": {
+          "enum": [
+            false
+          ]
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        },
+        "dispatch_attempts": {
+          "enum": [
+            0
+          ]
+        },
+        "code": {
+          "enum": [
+            "workflow_task_blocked",
+            "workflow_review_hold",
+            "authority_changed"
+          ]
+        },
+        "view": {
+          "enum": [
+            "compact"
+          ]
+        },
+        "omitted_fields": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "outputs"
+            ]
+          },
+          "maxItems": 1
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "outputs_checkpoint": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/recordReference"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "output_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 101
+            }
+          },
+          "required": [
+            "outputs_checkpoint",
+            "output_count"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "contract",
+        "workflow_id",
+        "project_id",
+        "plan_sha256",
+        "plan",
+        "checkpoint",
+        "checkpoint_sha256",
+        "status",
+        "progress",
+        "current_task",
+        "outputs",
+        "actions",
+        "adopted",
+        "world_facts_written",
+        "model_calls",
+        "dispatch_attempts"
+      ],
+      "additionalProperties": false
+    },
+    "storyState": {
+      "type": "object",
+      "properties": {
+        "contract": {
+          "enum": [
+            "writing-assistant-story-state/1"
+          ]
+        },
+        "state_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reference": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "snapshot": {
+          "type": "object"
+        },
+        "current": {
+          "type": "boolean"
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        },
+        "world_facts_written": {
+          "enum": [
+            false
+          ]
+        }
+      },
+      "required": [
+        "contract",
+        "state_id",
+        "revision",
+        "reference",
+        "snapshot",
+        "model_calls",
+        "world_facts_written"
+      ],
+      "additionalProperties": false
+    },
+    "projectConfiguration": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            1
+          ]
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "data_dir": {
+          "type": "string",
+          "maxLength": 16384
+        },
+        "writing_mode": {
+          "enum": [
+            "lotus",
+            "none"
+          ]
+        },
+        "world_sandbox": {
+          "type": "boolean"
+        },
+        "codex_adapter": {
+          "enum": [
+            "codex-exec/1"
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "project_id",
+        "data_dir",
+        "writing_mode",
+        "world_sandbox",
+        "codex_adapter"
+      ],
+      "additionalProperties": false
+    },
+    "configurationSnapshot": {
+      "type": "object",
+      "properties": {
+        "effective": {
+          "$ref": "#/$defs/projectConfiguration"
+        },
+        "source": {
+          "enum": [
+            "project-config"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "effective",
+        "source",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "configurationChange": {
+      "type": "object",
+      "properties": {
+        "effective": {
+          "$ref": "#/$defs/projectConfiguration"
+        },
+        "source": {
+          "enum": [
+            "project-config"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "new_context_required": {
+          "type": "boolean"
+        },
+        "message": {
+          "enum": [
+            "Each generation uses a new context; changing configuration does not erase an existing chat."
+          ]
+        }
+      },
+      "required": [
+        "effective",
+        "source",
+        "sha256",
+        "new_context_required",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "configurationResult": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/configurationSnapshot"
+        },
+        {
+          "$ref": "#/$defs/configurationChange"
+        }
+      ]
+    },
+    "requestCheck": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "valid"
+          ]
+        },
+        "executed": {
+          "enum": [
+            false
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "executed"
+      ],
+      "additionalProperties": false
+    },
+    "transportRequest": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            "writing-assistant-request/1"
+          ]
+        },
+        "request_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "kind": {
+          "enum": [
+            "writing",
+            "world-action"
+          ]
+        },
+        "request": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "phase": {
+          "enum": [
+            "concept",
+            "draft",
+            "plan-scene",
+            "reader-review",
+            "continuity-review",
+            "revise"
+          ]
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "uri": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "sha256": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "purpose": {
+                "enum": [
+                  "current-writing",
+                  "world-projection",
+                  "actor-projection"
+                ]
+              },
+              "role": {
+                "enum": [
+                  "request-material",
+                  "prior-prose",
+                  "current-draft",
+                  "feedback",
+                  "scene-projection"
+                ]
+              },
+              "source_kind": {
+                "enum": [
+                  "user-supplied",
+                  "producer-output",
+                  "record-version",
+                  "sandbox-projection",
+                  "synthetic",
+                  "unknown"
+                ]
+              },
+              "feedback_target": {
+                "type": "object",
+                "properties": {
+                  "uri": {
+                    "type": "string",
+                    "maxLength": 2048
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "uri",
+                  "sha256"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "uri",
+              "sha256",
+              "purpose"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 32
+        },
+        "techniques": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/techniqueSelection"
+          },
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "schema_version",
+        "request_id",
+        "project_id",
+        "kind",
+        "request",
+        "materials"
+      ],
+      "additionalProperties": false
+    },
+    "preparedPacket": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            "writing-assistant-packet/1"
+          ]
+        },
+        "request": {
+          "$ref": "#/$defs/transportRequest"
+        },
+        "configuration": {
+          "$ref": "#/$defs/configurationSnapshot"
+        },
+        "context": {
+          "enum": [
+            "new-per-request"
+          ]
+        },
+        "status": {
+          "enum": [
+            "prepared-unexecuted"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "reference": {
+                "type": "object",
+                "properties": {
+                  "uri": {
+                    "type": "string",
+                    "maxLength": 2048
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "purpose": {
+                    "enum": [
+                      "current-writing",
+                      "world-projection",
+                      "actor-projection"
+                    ]
+                  },
+                  "role": {
+                    "enum": [
+                      "request-material",
+                      "prior-prose",
+                      "current-draft",
+                      "feedback",
+                      "scene-projection"
+                    ]
+                  },
+                  "source_kind": {
+                    "enum": [
+                      "user-supplied",
+                      "producer-output",
+                      "record-version",
+                      "sandbox-projection",
+                      "synthetic",
+                      "unknown"
+                    ]
+                  },
+                  "feedback_target": {
+                    "type": "object",
+                    "properties": {
+                      "uri": {
+                        "type": "string",
+                        "maxLength": 2048
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "uri",
+                      "sha256"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "uri",
+                  "sha256",
+                  "purpose"
+                ],
+                "additionalProperties": false
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 4194304
+              }
+            },
+            "required": [
+              "reference",
+              "text"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 32
+        },
+        "instructions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 9
+        },
+        "relations": {
+          "type": "object",
+          "properties": {
+            "draft": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "uri": {
+                      "type": "string",
+                      "maxLength": 2048
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  },
+                  "required": [
+                    "uri",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "feedback": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "reference": {
+                    "type": "object",
+                    "properties": {
+                      "uri": {
+                        "type": "string",
+                        "maxLength": 2048
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "uri",
+                      "sha256"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "target": {
+                    "type": "object",
+                    "properties": {
+                      "uri": {
+                        "type": "string",
+                        "maxLength": 2048
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "uri",
+                      "sha256"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "reference",
+                  "target"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 32
+            }
+          },
+          "required": [
+            "draft",
+            "feedback"
+          ],
+          "additionalProperties": false
+        },
+        "producer_request": {
+          "type": "object",
+          "properties": {
+            "contract": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "enum": [
+                    "writing-producer-request"
+                  ]
+                },
+                "version": {
+                  "enum": [
+                    1
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "version"
+              ],
+              "additionalProperties": false
+            },
+            "packet": {
+              "type": "object",
+              "properties": {
+                "schema_version": {
+                  "enum": [
+                    1
+                  ]
+                },
+                "component_version": {
+                  "enum": [
+                    "0.1.0"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "ready"
+                  ]
+                },
+                "request_id": {
+                  "type": "string",
+                  "maxLength": 256
+                },
+                "selection": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "enum": [
+                        1
+                      ]
+                    },
+                    "mode": {
+                      "enum": [
+                        "lotus",
+                        "none"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "version",
+                    "mode"
+                  ],
+                  "additionalProperties": false
+                },
+                "phase": {
+                  "enum": [
+                    "concept",
+                    "draft",
+                    "plan-scene",
+                    "reader-review",
+                    "continuity-review",
+                    "revise"
+                  ]
+                },
+                "method_version": {
+                  "enum": [
+                    1,
+                    null
+                  ]
+                },
+                "context": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 256
+                    },
+                    "fresh": {
+                      "type": "boolean"
+                    },
+                    "frameworks_seen": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "maxItems": 32
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "fresh",
+                    "frameworks_seen"
+                  ],
+                  "additionalProperties": false
+                },
+                "context_assurance": {
+                  "enum": [
+                    "caller-declared-not-host-authenticated"
+                  ]
+                },
+                "request": {
+                  "type": "string",
+                  "maxLength": 1048576
+                },
+                "materials": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "reference": {
+                        "type": "object",
+                        "properties": {
+                          "uri": {
+                            "type": "string",
+                            "maxLength": 2048
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "uri",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "text": {
+                        "type": "string",
+                        "maxLength": 1048576
+                      }
+                    },
+                    "required": [
+                      "reference",
+                      "text"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 32
+                },
+                "instructions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 1
+                },
+                "packet_sha256": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "schema_version",
+                "component_version",
+                "status",
+                "request_id",
+                "selection",
+                "phase",
+                "method_version",
+                "context",
+                "context_assurance",
+                "request",
+                "materials",
+                "instructions",
+                "packet_sha256"
+              ],
+              "additionalProperties": false
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "kind": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "reference": {
+                    "type": "object",
+                    "properties": {
+                      "uri": {
+                        "type": "string",
+                        "maxLength": 2048
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "uri",
+                      "sha256"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "role",
+                  "kind",
+                  "reference"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 32
+            },
+            "request_sha256": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "contract",
+            "packet",
+            "sources",
+            "request_sha256"
+          ],
+          "additionalProperties": false
+        },
+        "techniques": {
+          "$ref": "#/$defs/techniqueSnapshot"
+        }
+      },
+      "required": [
+        "schema_version",
+        "request",
+        "configuration",
+        "context",
+        "status",
+        "sha256",
+        "materials",
+        "instructions"
+      ],
+      "additionalProperties": false
+    },
+    "codexDoctor": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "probe_scope": {
+              "enum": [
+                "local-version-help-and-feature-flags"
+              ]
+            },
+            "runtime_readiness": {
+              "enum": [
+                "not_checked"
+              ]
+            },
+            "status": {
+              "enum": [
+                "missing",
+                "unknown",
+                "unsupported"
+              ]
+            },
+            "code": {
+              "enum": [
+                "codex_missing",
+                "capability_unsupported"
+              ]
+            },
+            "live_supported": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "probe_scope",
+            "runtime_readiness",
+            "status",
+            "code",
+            "live_supported"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "probe_scope": {
+              "enum": [
+                "local-version-help-and-feature-flags"
+              ]
+            },
+            "runtime_readiness": {
+              "enum": [
+                "not_checked"
+              ]
+            },
+            "version": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 131072
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "surface": {
+              "enum": [
+                "codex-exec"
+              ]
+            },
+            "missing_flags": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "maxItems": 32
+            },
+            "model_observed": {
+              "enum": [
+                null
+              ]
+            },
+            "status": {
+              "enum": [
+                "supported",
+                "unknown",
+                "unsupported"
+              ]
+            },
+            "code": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "capability_unsupported"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "live_supported": {
+              "type": "boolean"
+            },
+            "launch_configuration": {
+              "enum": [
+                "not_checked",
+                "feature_flags_verified",
+                "unsupported",
+                "unknown"
+              ]
+            },
+            "version_redacted": {
+              "enum": [
+                true
+              ]
+            }
+          },
+          "required": [
+            "probe_scope",
+            "runtime_readiness",
+            "version",
+            "surface",
+            "missing_flags",
+            "model_observed",
+            "status",
+            "code",
+            "live_supported",
+            "launch_configuration"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "executionReceipt": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "error",
+            "not_dispatched",
+            "unknown",
+            "completed",
+            "codex_missing",
+            "capability_unsupported",
+            "codex_model_failure",
+            "codex_timeout",
+            "codex_cancelled",
+            "codex_malformed",
+            "codex_unknown"
+          ]
+        },
+        "references": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/recordReference"
+          }
+        },
+        "observation": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "adopted": {
+          "enum": [
+            false
+          ]
+        },
+        "usage": {},
+        "model_observed": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model_requested": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model_selection_source": {
+          "anyOf": [
+            {
+              "enum": [
+                "explicit-command",
+                "codex-cli-default-user-config-ignored"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasoning_effort_requested": {
+          "anyOf": [
+            {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "xhigh",
+                "max",
+                "ultra"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasoning_effort_observed": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasoning_effort_selection_source": {
+          "anyOf": [
+            {
+              "enum": [
+                "explicit-command",
+                "codex-cli-default-user-config-ignored"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "local_process_stopped": {
+          "type": "boolean"
+        },
+        "backend_stop_confirmed": {
+          "type": "boolean"
+        },
+        "observation_summary": {
+          "$ref": "#/$defs/observationSummary"
+        },
+        "content": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "provenance": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "relation_record": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "relations": {
+          "type": "object",
+          "properties": {
+            "contract": {
+              "enum": [
+                "writing-relations/1"
+              ]
+            },
+            "output": {
+              "$ref": "#/$defs/recordReference"
+            },
+            "draft": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/recordReference"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "draft_range": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "start": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "end": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "feedback": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "reference": {
+                    "$ref": "#/$defs/recordReference"
+                  },
+                  "target": {
+                    "$ref": "#/$defs/recordReference"
+                  }
+                },
+                "required": [
+                  "reference",
+                  "target"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 32
+            }
+          },
+          "required": [
+            "contract",
+            "output",
+            "draft",
+            "feedback"
+          ],
+          "additionalProperties": false
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "diagnostics": {
+          "type": "object",
+          "properties": {
+            "primary_code": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "capture": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/diagnosticWriteReceipt"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "warnings": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "maxItems": 64
+            },
+            "skipped_checks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "maxItems": 64
+            },
+            "next_action": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "required": [
+            "primary_code",
+            "warnings"
+          ],
+          "additionalProperties": false
+        },
+        "phase": {
+          "enum": [
+            "qualification"
+          ]
+        },
+        "launched": {
+          "enum": [
+            false
+          ]
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "references",
+        "observation",
+        "adopted",
+        "usage",
+        "model_observed",
+        "local_process_stopped",
+        "backend_stop_confirmed"
+      ],
+      "additionalProperties": false
+    },
+    "legacyExecution": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/executionReceipt"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "error"
+              ]
+            },
+            "code": {
+              "enum": [
+                "diagnostic_blocker"
+              ]
+            },
+            "diagnostics": {
+              "$ref": "#/$defs/diagnosticPreflight"
+            },
+            "model_calls": {
+              "enum": [
+                0
+              ]
+            },
+            "adopted": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "status",
+            "code",
+            "diagnostics",
+            "model_calls",
+            "adopted"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "worldStatus": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "enum": [
+            "owner-progress"
+          ]
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        },
+        "replay_verified": {
+          "type": "boolean"
+        },
+        "run_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "issued": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "remaining": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "branches": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cursor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "actors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                    },
+                    "coins": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "coins"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "version",
+              "cursor",
+              "actors"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "scope",
+        "model_calls",
+        "replay_verified",
+        "run_id",
+        "issued",
+        "remaining",
+        "branches"
+      ],
+      "additionalProperties": false
+    },
+    "worldSettlement": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "world_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "branch_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "actor_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "request_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "base_version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "enum": [
+            "accepted",
+            "rejected"
+          ]
+        },
+        "code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "event_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "run_id",
+        "world_id",
+        "branch_id",
+        "actor_id",
+        "request_id",
+        "base_version",
+        "status",
+        "code",
+        "version",
+        "event_id"
+      ],
+      "additionalProperties": false
+    },
+    "worldTimeAdvance": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "scope": {
+              "enum": [
+                "owner-progress"
+              ]
+            },
+            "status": {
+              "enum": [
+                "paused"
+              ]
+            },
+            "code": {
+              "enum": [
+                "stop_requested"
+              ]
+            }
+          },
+          "required": [
+            "scope",
+            "status",
+            "code"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "scope": {
+              "enum": [
+                "owner-progress"
+              ]
+            },
+            "status": {
+              "enum": [
+                "completed",
+                "paused"
+              ]
+            },
+            "code": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "time": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "target": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "processed": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+              },
+              "maxItems": 128
+            },
+            "remaining_due": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "scope",
+            "status",
+            "code",
+            "time",
+            "target",
+            "processed",
+            "remaining_due"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "worldAdvance": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "scope": {
+              "enum": [
+                "owner-progress"
+              ]
+            },
+            "run_id": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+            },
+            "branch_id": {
+              "enum": [
+                "main"
+              ]
+            },
+            "status": {
+              "enum": [
+                "completed",
+                "paused"
+              ]
+            },
+            "stop_requested": {
+              "type": "boolean"
+            },
+            "completed_steps": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "planned_steps": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "advanced_steps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 16
+            },
+            "receipts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/worldSettlement"
+              },
+              "maxItems": 16
+            },
+            "execution_evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/executionReceipt"
+              },
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "scope",
+            "run_id",
+            "branch_id",
+            "status",
+            "stop_requested",
+            "completed_steps",
+            "planned_steps",
+            "advanced_steps",
+            "receipts",
+            "execution_evidence"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "error"
+              ]
+            },
+            "code": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "execution_evidence": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/executionReceipt"
+              },
+              "maxItems": 16
+            },
+            "run_id": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+            }
+          },
+          "required": [
+            "status",
+            "code",
+            "execution_evidence",
+            "run_id"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "worldProjectionReference": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "maxLength": 91,
+          "pattern": "^lotus-sandbox-projection:1:[0-9a-f]{64}$"
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "purpose": {
+          "enum": [
+            "actor-projection",
+            "world-projection"
+          ]
+        }
+      },
+      "required": [
+        "uri",
+        "sha256",
+        "purpose"
+      ],
+      "additionalProperties": false
+    },
+    "worldProjection": {
+      "type": "object",
+      "properties": {
+        "reference": {
+          "$ref": "#/$defs/worldProjectionReference"
+        },
+        "body": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "schema_version": {
+                  "enum": [
+                    "lotus-sandbox-projection/1"
+                  ]
+                },
+                "run_id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "world_id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "branch_id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "world_version": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "actor_id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "purpose": {
+                  "enum": [
+                    "actor-projection"
+                  ]
+                },
+                "selection": {
+                  "enum": [
+                    null
+                  ]
+                },
+                "view": {
+                  "type": "object",
+                  "properties": {
+                    "actor_id": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                    },
+                    "profile": {
+                      "anyOf": [
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "trajectory": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "observation": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "actor_id",
+                    "profile",
+                    "trajectory",
+                    "observation"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "schema_version",
+                "run_id",
+                "world_id",
+                "branch_id",
+                "world_version",
+                "actor_id",
+                "purpose",
+                "selection",
+                "view"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "schema_version": {
+                  "enum": [
+                    "lotus-sandbox-projection/1"
+                  ]
+                },
+                "run_id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "world_id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "branch_id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "world_version": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "actor_id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                },
+                "purpose": {
+                  "enum": [
+                    "world-projection"
+                  ]
+                },
+                "selection": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      ]
+                    }
+                  }
+                },
+                "view": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          ]
+                        }
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              null
+                            ]
+                          },
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "schema_version",
+                "run_id",
+                "world_id",
+                "branch_id",
+                "world_version",
+                "actor_id",
+                "purpose",
+                "selection",
+                "view"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "reference",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "worldCaptureReceipt": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "created",
+            "retry"
+          ]
+        },
+        "ref": {
+          "$ref": "#/$defs/recordReference"
+        },
+        "projection_reference": {
+          "$ref": "#/$defs/worldProjectionReference"
+        },
+        "adopted": {
+          "enum": [
+            false
+          ]
+        },
+        "model_calls": {
+          "enum": [
+            0
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "ref",
+        "projection_reference",
+        "adopted",
+        "model_calls"
+      ],
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "enum": [
+            "writing-assistant-capabilities/1"
+          ]
+        },
+        "application_version": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "view": {
+          "enum": [
+            "overview",
+            "operation",
+            "detail",
+            "schema"
+          ]
+        },
+        "schemas": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "schema": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "operation": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "output_schema": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "output_validation": {
+                "enum": [
+                  "core-fields",
+                  "json-fields-or-original-bytes",
+                  "original-bytes",
+                  "not-covered"
+                ]
+              },
+              "output_variants": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "when": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "transport": {
+                      "enum": [
+                        "json",
+                        "bytes"
+                      ]
+                    },
+                    "schema": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 4096
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "validation": {
+                      "enum": [
+                        "core-fields",
+                        "bounded-original-bytes"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "when",
+                    "transport",
+                    "schema",
+                    "validation"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "operation"
+            ],
+            "additionalProperties": true
+          },
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "schema_version",
+        "application_version",
+        "view",
+        "schemas"
+      ],
+      "additionalProperties": true
+    },
+    "cliError": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "error"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "required_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "allowed_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "operation": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "effect_status": {
+          "enum": [
+            "none",
+            "unknown"
+          ]
+        },
+        "task_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "attempt_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "workflow_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "plan_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "checkpoint_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "case_id": {
+          "type": "string",
+          "maxLength": 96,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "pending_id": {
+          "type": "string",
+          "maxLength": 34,
+          "pattern": "^[pd]-[0-9a-f]{32}$"
+        },
+        "project_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "request_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "run_id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "configuration_sha256": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "references": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/recordReference"
+              },
+              {
+                "$ref": "#/$defs/bookmarkReference"
+              },
+              {
+                "$ref": "#/$defs/diagnosticReference"
+              },
+              {
+                "$ref": "#/$defs/worldProjectionReference"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "status",
+        "code"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "anyOf": [
+    {
+      "$ref": "#/$defs/configurationSnapshot"
+    },
+    {
+      "$ref": "#/$defs/configurationResult"
+    },
+    {
+      "$ref": "#/$defs/codexDoctor"
+    },
+    {
+      "$ref": "#/$defs/requestCheck"
+    },
+    {
+      "$ref": "#/$defs/preparedPacket"
+    },
+    {
+      "$ref": "#/$defs/legacyExecution"
+    },
+    {
+      "$ref": "#/$defs/worldStatus"
+    },
+    {
+      "$ref": "#/$defs/worldAdvance"
+    },
+    {
+      "$ref": "#/$defs/worldTimeAdvance"
+    },
+    {
+      "$ref": "#/$defs/worldSettlement"
+    },
+    {
+      "$ref": "#/$defs/worldProjection"
+    },
+    {
+      "$ref": "#/$defs/worldCaptureReceipt"
+    },
+    {
+      "$ref": "#/$defs/taskView"
+    },
+    {
+      "$ref": "#/$defs/taskDiagnostics"
+    },
+    {
+      "$ref": "#/$defs/capabilities"
+    },
+    {
+      "$ref": "#/$defs/techniqueCatalog"
+    },
+    {
+      "$ref": "#/$defs/techniqueView"
+    },
+    {
+      "$ref": "#/$defs/techniqueSuggestions"
+    },
+    {
+      "$ref": "#/$defs/storyState"
+    },
+    {
+      "$ref": "#/$defs/writingWorkflow"
+    },
+    {
+      "$ref": "#/$defs/recordWriteReceipt"
+    },
+    {
+      "$ref": "#/$defs/recordReadReceipt"
+    },
+    {
+      "$ref": "#/$defs/recordShow"
+    },
+    {
+      "$ref": "#/$defs/recordPage"
+    },
+    {
+      "$ref": "#/$defs/recordSearchPage"
+    },
+    {
+      "$ref": "#/$defs/recordList"
+    },
+    {
+      "$ref": "#/$defs/recordHistory"
+    },
+    {
+      "$ref": "#/$defs/recordIndexReceipt"
+    },
+    {
+      "$ref": "#/$defs/recordRoutesReceipt"
+    },
+    {
+      "$ref": "#/$defs/bookmarkWriteReceipt"
+    },
+    {
+      "$ref": "#/$defs/bookmark"
+    },
+    {
+      "$ref": "#/$defs/bookmarkPage"
+    },
+    {
+      "$ref": "#/$defs/continuationContext"
+    },
+    {
+      "$ref": "#/$defs/diagnosticWriteReceipt"
+    },
+    {
+      "$ref": "#/$defs/diagnosticShow"
+    },
+    {
+      "$ref": "#/$defs/diagnosticPreflight"
+    },
+    {
+      "$ref": "#/$defs/diagnosticPage"
+    },
+    {
+      "$ref": "#/$defs/diagnosticPending"
+    },
+    {
+      "$ref": "#/$defs/diagnosticRecoveryReceipt"
+    },
+    {
+      "$ref": "#/$defs/diagnosticPruneReceipt"
+    },
+    {
+      "$ref": "#/$defs/cliError"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "story-context-v1.schema.json",
+  "title": "Bounded exact story context request",
+  "description": "Select only explicitly indexed original record versions and current exact state. Newest explicitly provided recent chapters precede explicit earlier prose. Receipt JSON bytes and selected original bytes count against max_bytes; the receipt counts as one item. Budget/relevance exclusions are visible. Runtime validates byte offsets, digests, UTF-8 boundaries, exact scope and current state. No prose summary replaces originals and no library discovery is performed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "context_id",
+    "project_id"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "writing-assistant-story-context-request/1"
+    },
+    "context_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "state": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ref"
+          ],
+          "properties": {
+            "ref": {
+              "$ref": "#/$defs/recordReference"
+            },
+            "entry_ids": {
+              "type": "array",
+              "maxItems": 128,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+              }
+            },
+            "tags": {
+              "type": "array",
+              "maxItems": 16,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+              }
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "earlier_prose": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ref",
+          "reason"
+        ],
+        "properties": {
+          "ref": {
+            "$ref": "#/$defs/recordReference"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "pattern": "\\S"
+          },
+          "tags": {
+            "type": "array",
+            "maxItems": 16,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+            }
+          },
+          "span": {
+            "$ref": "#/$defs/span"
+          }
+        }
+      }
+    },
+    "recent_chapters": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ref",
+          "chapter"
+        ],
+        "properties": {
+          "ref": {
+            "$ref": "#/$defs/recordReference"
+          },
+          "chapter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20000
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+      }
+    },
+    "max_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 262144,
+      "default": 262144
+    },
+    "max_items": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 24,
+      "default": 24
+    }
+  },
+  "$defs": {
+    "recordReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "project_id",
+        "record_id",
+        "version_id",
+        "sha256"
+      ],
+      "properties": {
+        "contract": {
+          "const": "creative-records/1"
+        },
+        "project_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+        },
+        "record_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "version_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "span": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end",
+        "sha256"
+      ],
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777215
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  }
+}

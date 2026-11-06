@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prepared writing packet v1",
+  "oneOf": [
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "component_version", "status", "request_id", "selection", "phase", "method_version", "context", "context_assurance", "request", "materials", "instructions", "packet_sha256"],
+      "properties": {
+        "schema_version": {"const": 1}, "component_version": {"const": "0.1.0"}, "status": {"const": "ready"},
+        "request_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "selection": {"$ref": "request-v1.schema.json#/$defs/selection"},
+        "phase": {"enum": ["concept", "plan-scene", "draft", "reader-review", "continuity-review", "revise"]},
+        "method_version": {"enum": [1, null]},
+        "context": {"$ref": "request-v1.schema.json#/$defs/context"},
+        "context_assurance": {"const": "caller-declared-not-host-authenticated"},
+        "request": {"type": "string", "maxLength": 1048576},
+        "materials": {"type": "array", "maxItems": 32, "items": {
+          "type": "object", "additionalProperties": false, "required": ["reference", "text"],
+          "properties": {"reference": {"$ref": "request-v1.schema.json#/$defs/reference"}, "text": {"type": "string", "maxLength": 1048576}}
+        }},
+        "instructions": {"type": "array", "maxItems": 1, "items": {"type": "string"}},
+        "packet_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "allOf": [{"if": {"properties": {"selection": {"properties": {"mode": {"const": "none"}}}}},
+                  "then": {"properties": {"phase": {"enum": ["concept", "draft", "reader-review", "continuity-review"]}, "method_version": {"type": "null"}, "instructions": {"maxItems": 0}}},
+                  "else": {"properties": {"method_version": {"const": 1}, "instructions": {"minItems": 1}}}}]
+    },
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "status", "selection", "request_id", "instructions", "reason", "assurance"],
+      "properties": {
+        "schema_version": {"const": 1}, "status": {"const": "new-context-required"},
+        "selection": {"$ref": "request-v1.schema.json#/$defs/selection"},
+        "request_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "instructions": {"type": "array", "maxItems": 0},
+        "reason": {"type": "string"}, "assurance": {"type": "string"}
+      }
+    }
+  ],
+  "$comment": "Runtime additionally verifies packet digest, direct-mode instruction absence, method identity, context conditions, byte limits and each material digest. Collection does not reload current method files to reinterpret historical packets. A self-consistent digest is not authentication or execution authority."
+}

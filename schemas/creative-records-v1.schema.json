@@ -1,0 +1,259 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "project_id",
+    "record_id",
+    "version_id",
+    "operation_id",
+    "request_sha256",
+    "title",
+    "kind",
+    "work_id",
+    "source",
+    "audiences",
+    "original_created_at",
+    "received_at",
+    "parent",
+    "related",
+    "body"
+  ],
+  "properties": {
+    "contract": {
+      "const": "creative-records/1"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "record_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "version_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "operation_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "kind": {
+      "enum": [
+        "idea",
+        "fragment",
+        "draft",
+        "setting",
+        "decision",
+        "feedback",
+        "prose"
+      ]
+    },
+    "work_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorship",
+        "origin"
+      ],
+      "properties": {
+        "authorship": {
+          "enum": [
+            "user",
+            "agent",
+            "mixed",
+            "unknown"
+          ]
+        },
+        "origin": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4096
+        }
+      }
+    },
+    "audiences": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "original_created_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "parent": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contract",
+            "project_id",
+            "record_id",
+            "version_id",
+            "sha256"
+          ],
+          "properties": {
+            "contract": {
+              "const": "creative-records/1"
+            },
+            "project_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+            },
+            "record_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+            },
+            "version_id": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "related": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "contract",
+          "project_id",
+          "record_id",
+          "version_id",
+          "sha256"
+        ],
+        "properties": {
+          "contract": {
+            "const": "creative-records/1"
+          },
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+          },
+          "record_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+          },
+          "version_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      },
+      "maxItems": 64
+    },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "storage",
+        "sha256",
+        "size",
+        "reference"
+      ],
+      "properties": {
+        "storage": {
+          "enum": [
+            "inline",
+            "reference"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777216
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "producer",
+                "version",
+                "path",
+                "sha256"
+              ],
+              "properties": {
+                "producer": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+                },
+                "version": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Creative Records v1 canonical envelope",
+  "description": "Transport shape only. Python T01 additionally verifies digests, IDs, paths, provenance limits, permissions and transaction integrity. A schema is not an authorization grant."
+}

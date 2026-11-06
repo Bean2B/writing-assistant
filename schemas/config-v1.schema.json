@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Writing Assistant project configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project_id",
+    "data_dir",
+    "writing_mode",
+    "world_sandbox",
+    "codex_adapter"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+    },
+    "data_dir": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/"
+    },
+    "writing_mode": {
+      "enum": [
+        "lotus",
+        "none"
+      ],
+      "default": "lotus"
+    },
+    "world_sandbox": {
+      "type": "boolean",
+      "default": true
+    },
+    "codex_adapter": {
+      "const": "codex-exec/1"
+    }
+  },
+  "$comment": "Runtime also enforces normalized physical paths, source/data separation and directory checks."
+}

@@ -1,0 +1,18 @@
+name: 缺陷报告 / Bug report
+description: 使用合成输入报告问题 / Report a problem using synthetic inputs
+body:
+  - type: markdown
+    attributes:
+      value: "仅使用合成材料，不附稿件、凭据或私人日志。 / Use synthetic material only. Do not include manuscripts, credentials or private logs."
+  - type: input
+    id: version
+    attributes:
+      label: 版本与环境 / Version and environment
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 合成复现、预期与实际行为 / Synthetic reproduction, expected and actual behavior
+    validations:
+      required: true

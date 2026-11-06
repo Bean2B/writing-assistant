@@ -1,0 +1,249 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "project_id",
+    "bookmark_id",
+    "operation_id",
+    "request_sha256",
+    "received_at",
+    "audience",
+    "selected",
+    "stop",
+    "decisions",
+    "questions",
+    "materials",
+    "baseline"
+  ],
+  "properties": {
+    "contract": {
+      "const": "creative-continuation/1"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "bookmark_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "operation_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "audience": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "selected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "project_id",
+        "record_id",
+        "version_id",
+        "sha256"
+      ],
+      "properties": {
+        "contract": {
+          "const": "creative-records/1"
+        },
+        "project_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "record_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "version_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "stop": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "contract",
+          "project_id",
+          "record_id",
+          "version_id",
+          "sha256"
+        ],
+        "properties": {
+          "contract": {
+            "const": "creative-records/1"
+          },
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+          },
+          "record_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+          },
+          "version_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "source"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "contract",
+                  "project_id",
+                  "record_id",
+                  "version_id",
+                  "sha256"
+                ],
+                "properties": {
+                  "contract": {
+                    "const": "creative-records/1"
+                  },
+                  "project_id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+                  },
+                  "record_id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+                  },
+                  "version_id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "materials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ref",
+          "range"
+        ],
+        "properties": {
+          "ref": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "contract",
+              "project_id",
+              "record_id",
+              "version_id",
+              "sha256"
+            ],
+            "properties": {
+              "contract": {
+                "const": "creative-records/1"
+              },
+              "project_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+              },
+              "record_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+              },
+              "version_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          },
+          "range": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "baseline": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 256
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Creative Continuation v1 canonical bookmark",
+  "description": "Transport shape only. T03 validates source authority, exact versions, UTF-8 offsets, baseline binding and total bounds."
+}

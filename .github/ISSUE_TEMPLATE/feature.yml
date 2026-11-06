@@ -1,0 +1,10 @@
+name: 建议 / Suggestion
+description: 向维护者提出建议 / Suggest a change for maintainer review
+body:
+  - type: textarea
+    id: request
+    attributes:
+      label: 问题与期望结果 / Problem and proposed outcome
+      description: 使用合成示例；issue 是反馈，不是执行授权。 / Use synthetic examples. An issue is feedback, not execution authorization.
+    validations:
+      required: true

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Writing producer output reference v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "producer", "component_version", "request_id", "packet_sha256", "selection", "phase", "method_version", "inputs", "output", "byte_length", "parent", "origin", "origin_assurance", "disposition"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "producer": {"const": "lotus-writing-producer"},
+    "component_version": {"const": "0.1.0"},
+    "request_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "packet_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "selection": {"$ref": "request-v1.schema.json#/$defs/selection"},
+    "phase": {"enum": ["concept", "plan-scene", "draft", "reader-review", "continuity-review", "revise"]},
+    "method_version": {"enum": [1, null]},
+    "inputs": {"type": "array", "maxItems": 32, "items": {"$ref": "request-v1.schema.json#/$defs/reference"}},
+    "output": {"$ref": "request-v1.schema.json#/$defs/reference"},
+    "byte_length": {"type": "integer", "minimum": 0},
+    "parent": {"oneOf": [{"type": "null"}, {"$ref": "request-v1.schema.json#/$defs/reference"}]},
+    "origin": {
+      "type": "object", "additionalProperties": false, "required": ["host", "execution_ref", "status", "evidence_kind"],
+      "properties": {
+        "host": {"const": "codex"},
+        "execution_ref": {"type": ["string", "null"], "minLength": 1, "maxLength": 2048},
+        "evidence_kind": {"enum": ["synthetic", "supplied-output", "host-observation"]},
+        "status": {"enum": ["completed", "failed", "cancelled", "unknown"]}
+      }
+    },
+    "origin_assurance": {"const": "caller-reported-not-authenticated"},
+    "disposition": {"const": "unadopted-producer-output"}
+  },
+  "allOf": [{"if": {"properties": {"selection": {"properties": {"mode": {"const": "none"}}}}},
+              "then": {"properties": {"phase": {"enum": ["concept", "draft", "reader-review", "continuity-review"]}, "method_version": {"type": "null"}}},
+              "else": {"properties": {"method_version": {"const": 1}}}}],
+  "$comment": "A URI is supplied by its content owner. No record ID, latest-version alias, adoption flag or provenance authentication is minted here."
+}

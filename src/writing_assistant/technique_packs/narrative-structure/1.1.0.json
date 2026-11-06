@@ -1,0 +1,187 @@
+{
+  "schema_version": "writing-assistant-technique-pack/1",
+  "pack_id": "narrative-structure",
+  "pack_version": "1.1.0",
+  "title": "Narrative structure",
+  "summary": "Conditional guidance for character choices, changing constraints, local outcomes, and recurring questions.",
+  "guidance": "Use only the selected techniques that fit the explicit task and supplied material. The user's goals, established facts, requested form, and revision scope take precedence. Treat these techniques as optional ways to reason about a scene, not a mandatory template, score, or acceptance gate. Preserve unknowns when evidence is missing; label invented details as proposals. Apply useful observations through the requested work without requiring technique labels in the output. These techniques do not define a prose style, dialogue voice, or guarantee of literary quality.",
+  "phase_guidance": {
+    "concept": "Develop adjustable candidates around the user's premise and interests. Use applicable techniques to explore motivations, constraints, and an opening conflict. Keep suggestions distinct from adopted facts and unresolved questions; do not prescribe a complete novel ending.",
+    "draft": "Express applicable guidance through the actions, choices, and changes needed by the current scene. Respect the requested length, form, voice, and supplied facts.",
+    "plan-scene": "Consider only the current scene and the action or information needed to connect its events. Keep plans proportional to the task; add background only when it changes a relevant choice.",
+    "reader-review": "Use selected techniques as optional diagnostic lenses. Tie an observation to a location and visible evidence in the selected draft, describe a possible reader effect, and distinguish missing presentation from a fact proven absent. Do not assign a score or require every technique to appear.",
+    "continuity-review": "Check only the selected materials for state, knowledge timing, actions, and consequences. Separate established facts, character interpretations, and unverified information. Mark coverage gaps rather than inventing missing history.",
+    "revise": "Work within the explicit revision scope using the exact current draft and applicable feedback. Preserve established facts, necessary information, and the requested style. A technique does not authorize unrelated changes or content adoption."
+  },
+  "techniques": [
+    {
+      "technique_id": "shared-task-dependency",
+      "title": "Make shared progress depend on another character's choice",
+      "phases": [
+        "concept",
+        "draft",
+        "plan-scene",
+        "reader-review",
+        "continuity-review",
+        "revise"
+      ],
+      "applies_when": "A shared task involves several characters, but someone beyond the protagonist only watches, agrees, or performs an interchangeable function.",
+      "guidance": "Consider a relevant character's responsibility, the access or resources they control, the decision they make now, and how that decision changes another person's next action. Let consequences remain with the person who made the choice. The protagonist can connect shared aims while other people decide their own part.",
+      "limitations": [
+        "A division of functions alone does not establish an independent character. Expand only the people and choices that matter to this task.",
+        "Do not add a full biography or equal decision power for every participant merely to satisfy the technique."
+      ],
+      "review_criteria": [
+        "If a participant seems replaceable, identify the passage where their decision could change the available next step and explain the likely effect.",
+        "If the selected scene already gives that person a consequential choice, describe the supporting action instead of requesting additional independence."
+      ],
+      "applicability": {
+        "tasks": [
+          "writing",
+          "review",
+          "revision"
+        ],
+        "story_tags": [
+          "shared-task",
+          "interdependent-characters"
+        ]
+      }
+    },
+    {
+      "technique_id": "state-and-knowledge",
+      "title": "Connect changing conditions with what characters can know",
+      "phases": [
+        "concept",
+        "draft",
+        "plan-scene",
+        "reader-review",
+        "continuity-review",
+        "revise"
+      ],
+      "applies_when": "An action has a cumulative cost or stated rule that should change later options, or a character seems to act on information before they could receive it.",
+      "guidance": "Track a relevant condition before the action, who knows what at that moment, the change produced, and the options gained or lost. Distinguish event order, disclosure order, and a character's explanation. Keep an unverified explanation uncertain until the selected material supports it.",
+      "limitations": [
+        "Changing descriptive intensity alone does not establish accumulating consequences. A new solution needs the preparation and limits required by the story's own rules.",
+        "When a task promises a rule-based mystery or solution, supply the necessary causal explanation; uncertainty cannot replace it. Later knowledge alone does not establish the cause of an earlier action."
+      ],
+      "review_criteria": [
+        "Where the material establishes a changing constraint, compare the available options before and after it and cite the relevant evidence.",
+        "Where apparent foreknowledge affects an action, locate the information transfer or identify the coverage gap without assuming an unseen contradiction."
+      ],
+      "applicability": {
+        "tasks": [
+          "writing",
+          "review",
+          "revision"
+        ],
+        "story_tags": [
+          "knowledge-change",
+          "resource-cost",
+          "time-order",
+          "continuity-constraint"
+        ]
+      }
+    },
+    {
+      "technique_id": "personal-tradeoffs",
+      "title": "Give participants different stakes in a shared objective",
+      "phases": [
+        "concept",
+        "draft",
+        "plan-scene",
+        "reader-review",
+        "continuity-review",
+        "revise"
+      ],
+      "applies_when": "Characters differ mainly by occupation, ability, or personality labels, while a shared victory appears to resolve the same personal question for everyone.",
+      "guidance": "Consider what success cannot decide for a relevant character: what they want to preserve, what cost they will accept, and what they choose or give up. Give a significant choice enough earlier preparation to be understandable. A later comparable pressure can reveal whether the difference matters.",
+      "limitations": [
+        "A final declaration cannot substitute for the development needed to support the choice. Distinct outcomes alone do not establish a complete character arc, stable personality, dialogue voice, or a particular social consequence.",
+        "Do not automatically add trauma, sacrifice, or interpersonal conflict. A small practical tradeoff may fit the scene."
+      ],
+      "review_criteria": [
+        "If the task calls for a consequential personal decision, identify its preparation and the action that expresses the tradeoff.",
+        "If differences remain labels, describe the specific choice they fail to affect; do not demand a separate arc for every person."
+      ],
+      "applicability": {
+        "tasks": [
+          "writing",
+          "review",
+          "revision"
+        ],
+        "story_tags": [
+          "personal-stakes",
+          "competing-needs",
+          "consequential-choice"
+        ]
+      }
+    },
+    {
+      "technique_id": "local-outcomes",
+      "title": "Give a local story an observable result",
+      "phases": [
+        "concept",
+        "draft",
+        "plan-scene",
+        "reader-review",
+        "continuity-review",
+        "revise"
+      ],
+      "applies_when": "A local episode appears to exist only to advance a larger plot, or its ending leaves unclear what changed for the people involved.",
+      "guidance": "Connect a local problem and intended response to a new circumstance, a person's action, and the observable result. Consider the episode's connection to the larger story separately: it may cause an event, change understanding, or create a thematic resonance. Preserve the kind of connection that the material actually supports.",
+      "limitations": [
+        "A plan does not establish execution; an agreement does not establish lasting operation; a local choice does not establish long-term success.",
+        "Do not invent a contribution to the main plot. When proposing a cut, consider the character or understanding value that would also be lost."
+      ],
+      "review_criteria": [
+        "Where a local outcome is expected, identify the change visible by the episode's end and distinguish it from a promise about the future.",
+        "If the connection to the larger story is unclear, explain whether the available evidence supports causation, changed understanding, or resonance before suggesting a change."
+      ],
+      "applicability": {
+        "tasks": [
+          "writing",
+          "review",
+          "revision"
+        ],
+        "story_tags": [
+          "local-episode",
+          "observable-result"
+        ]
+      }
+    },
+    {
+      "technique_id": "consequential-recurrence",
+      "title": "Let a recurring question change the next choice",
+      "phases": [
+        "concept",
+        "draft",
+        "plan-scene",
+        "reader-review",
+        "continuity-review",
+        "revise"
+      ],
+      "applies_when": "A question, promise, or opposing position recurs over time, but each appearance mainly reminds the reader of the same unresolved issue.",
+      "guidance": "Consider what evidence this recurrence adds, what its provider wants in return, whose judgment changes, and how the next choice becomes different. Retain the source and credibility of information. An unchanged repetition can be a candidate for shortening or revision when it serves no other purpose.",
+      "limitations": [
+        "A late revelation does not establish every earlier motive. Similar disputes about secrecy need not concern the same secret.",
+        "Do not assume all setup has received a payoff. Added explanation can crowd out the action or deliberate repetition required by the user's form."
+      ],
+      "review_criteria": [
+        "When a recurrence appears redundant, compare what the characters can infer or choose before and after it using the selected passages.",
+        "Recognize a supported change in evidence, bargaining position, or judgment without requiring a revelation on every return."
+      ],
+      "applicability": {
+        "tasks": [
+          "writing",
+          "review",
+          "revision"
+        ],
+        "story_tags": [
+          "recurring-question",
+          "promise",
+          "repeated-detail"
+        ]
+      }
+    }
+  ]
+}

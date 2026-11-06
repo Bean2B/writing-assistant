@@ -1,0 +1,16 @@
+[build-system]
+requires = []
+build-backend = "build_backend"
+backend-path = ["."]
+
+[project]
+name = "writing-assistant"
+version = "0.1.1"
+description = "AI-powered writing application for Agents, developed by Codex"
+requires-python = ">=3.12"
+dependencies = []
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+
+[project.scripts]
+writing-assistant = "writing_assistant.cli:main"

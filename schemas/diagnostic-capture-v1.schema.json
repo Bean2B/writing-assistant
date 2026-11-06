@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Selected local diagnostic capture metadata v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "context"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,95}$"
+    },
+    "context": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/context"
+        },
+        {
+          "properties": {
+            "category": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "confidence": {
+      "enum": [
+        "unknown",
+        "hypothesis",
+        "confirmed"
+      ]
+    },
+    "disposition": {
+      "enum": [
+        "advisory",
+        "blocker"
+      ]
+    },
+    "diagnosis": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 64
+    },
+    "origin": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "secrets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 64
+    }
+  },
+  "$defs": {
+    "facts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "boolean",
+          "integer"
+        ]
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "component",
+        "operation",
+        "category",
+        "revision",
+        "environment",
+        "code_state",
+        "inputs",
+        "configuration",
+        "trigger",
+        "branch",
+        "worktree"
+      ],
+      "properties": {
+        "project_id": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "operation": {
+          "type": "string"
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Null is permitted for preflight only."
+        },
+        "revision": {
+          "type": "string"
+        },
+        "environment": {
+          "$ref": "#/$defs/facts"
+        },
+        "code_state": {
+          "$ref": "#/$defs/facts"
+        },
+        "inputs": {
+          "$ref": "#/$defs/facts"
+        },
+        "configuration": {
+          "$ref": "#/$defs/facts"
+        },
+        "trigger": {
+          "$ref": "#/$defs/facts"
+        },
+        "branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "worktree": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  },
+  "$comment": "Evidence is selected separately via --evidence. Runtime DiagnosticStore validation is authoritative for identifiers, fact bounds, expiry and origin. Shape validation does not establish diagnostic applicability or retry authority."
+}

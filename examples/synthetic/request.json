@@ -1,0 +1,8 @@
+{
+  "schema_version": "writing-assistant-request/1",
+  "request_id": "synthetic-001",
+  "project_id": "demo",
+  "kind": "writing",
+  "request": "Write one sentence about a brass bell on a quiet floating station.",
+  "materials": []
+}

@@ -1,0 +1,239 @@
+{
+  "schema": "lotus-continuity-config/2",
+  "scenario": {
+    "world_id": "synthetic-town",
+    "branch_id": "main",
+    "lineage": [],
+    "tick": 0,
+    "version": 0,
+    "locations": [
+      "square",
+      "market",
+      "road"
+    ],
+    "actors": {
+      "traveler": {
+        "location": "square",
+        "coins": 10,
+        "memory": []
+      },
+      "companion": {
+        "location": "square",
+        "coins": 10,
+        "memory": []
+      },
+      "resident-000": {
+        "location": "square",
+        "coins": 10,
+        "memory": []
+      },
+      "resident-001": {
+        "location": "square",
+        "coins": 10,
+        "memory": []
+      },
+      "resident-002": {
+        "location": "square",
+        "coins": 10,
+        "memory": []
+      }
+    },
+    "items": {
+      "route-key": {
+        "owner": null,
+        "location": "square",
+        "price": null
+      },
+      "flour": {
+        "owner": null,
+        "location": "market",
+        "price": null
+      }
+    },
+    "doors": {
+      "market-path": {
+        "locations": [
+          "square",
+          "market"
+        ],
+        "key": "route-key",
+        "locked": false
+      },
+      "road-path": {
+        "locations": [
+          "square",
+          "road"
+        ],
+        "key": "route-key",
+        "locked": false
+      },
+      "market-road": {
+        "locations": [
+          "market",
+          "road"
+        ],
+        "key": "route-key",
+        "locked": false
+      }
+    },
+    "facts": {
+      "private-letter": {
+        "text": "The hidden letter has not been located.",
+        "audience": [
+          "companion"
+        ]
+      }
+    },
+    "life": {
+      "schema": "lotus-world-life/1",
+      "time": 0,
+      "people": {
+        "traveler": {
+          "goal": "Trace the missing letter while deciding whom to trust.",
+          "schedule": [],
+          "anchor": 0,
+          "relations": {},
+          "origin": null
+        },
+        "companion": {
+          "goal": "Trace the missing letter while deciding whom to trust.",
+          "schedule": [],
+          "anchor": 0,
+          "relations": {},
+          "origin": null
+        },
+        "resident-000": {
+          "goal": "Maintain a daily livelihood.",
+          "schedule": [
+            {
+              "minute": 480,
+              "location": "market"
+            },
+            {
+              "minute": 1080,
+              "location": "square"
+            }
+          ],
+          "anchor": 0,
+          "relations": {},
+          "origin": null
+        },
+        "resident-001": {
+          "goal": "Maintain a daily livelihood.",
+          "schedule": [
+            {
+              "minute": 480,
+              "location": "market"
+            },
+            {
+              "minute": 1080,
+              "location": "square"
+            }
+          ],
+          "anchor": 0,
+          "relations": {},
+          "origin": null
+        },
+        "resident-002": {
+          "goal": "Maintain a daily livelihood.",
+          "schedule": [
+            {
+              "minute": 480,
+              "location": "market"
+            },
+            {
+              "minute": 1080,
+              "location": "square"
+            }
+          ],
+          "anchor": 0,
+          "relations": {},
+          "origin": null
+        }
+      },
+      "groups": {
+        "market-crowd": {
+          "count": 3,
+          "location": "market",
+          "role": "Market residents and visitors.",
+          "members": {}
+        }
+      },
+      "queue": [
+        {
+          "id": "baker-collection",
+          "at": 490,
+          "cause": "Collect the reserved flour for the morning bake.",
+          "participants": [
+            "resident-000"
+          ],
+          "effect": {
+            "type": "take",
+            "actor": "resident-000",
+            "item": "flour"
+          }
+        },
+        {
+          "id": "courier-departs",
+          "at": 510,
+          "cause": "The courier must meet the scheduled ferry.",
+          "participants": [
+            "resident-001"
+          ],
+          "effect": {
+            "type": "move",
+            "actor": "resident-001",
+            "to": "road"
+          }
+        },
+        {
+          "id": "neighbor-rumor",
+          "at": 530,
+          "cause": "A neighbor relays an uncertain sighting.",
+          "participants": [
+            "resident-002",
+            "traveler"
+          ],
+          "effect": {
+            "type": "message",
+            "sender": "resident-002",
+            "recipient": "traveler",
+            "text": "Someone may have seen the letter near the ferry.",
+            "basis": "hearsay",
+            "fact": null
+          }
+        }
+      ],
+      "history": []
+    }
+  },
+  "profiles": {
+    "traveler": {
+      "actor_id": "traveler",
+      "version": 2,
+      "aim": "Investigate an open question.",
+      "values": [
+        "care"
+      ],
+      "risk": "cautious",
+      "habit": "observe"
+    },
+    "companion": {
+      "actor_id": "companion",
+      "version": 2,
+      "aim": "Investigate an open question.",
+      "values": [
+        "care"
+      ],
+      "risk": "cautious",
+      "habit": "observe"
+    }
+  },
+  "actor_order": [
+    "traveler",
+    "companion"
+  ],
+  "policy": "external",
+  "turn_limit": 2,
+  "request_limit": 4
+}
