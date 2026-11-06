@@ -120,7 +120,7 @@ AI 功能使用本机已登录的 Codex CLI。先检查版本是否受支持：
 ### 反馈与许可
 
 遇到问题或有改进建议，可以到 [Issues](https://github.com/Bean2B/writing-assistant/issues)
-说明。请用简短的虚构例子复现，避免附上真实稿件、凭据或私人日志。公开 repo 不接收 PR。
+说明。请用简短的虚构例子复现，避免附上真实稿件、凭据或私人日志。PR 仅用于开发者维护。
 另见[安全说明](SECURITY.md)和[行为准则](CODE_OF_CONDUCT.md)。
 
 采用 [Apache-2.0](LICENSE)，Copyright 2026 Bean2B。
@@ -268,7 +268,7 @@ still depends on the task, material, and model; review a result before using it.
 Report problems or suggest improvements in
 [Issues](https://github.com/Bean2B/writing-assistant/issues). A small made-up
 example is most useful; please leave out manuscripts, credentials, and private
-logs. This public repository does not accept PRs. See the [security guidance](SECURITY.md) and
+logs. Pull requests are reserved for developer maintenance. See the [security guidance](SECURITY.md) and
 [code of conduct](CODE_OF_CONDUCT.md).
 
 [Apache-2.0](LICENSE). Copyright 2026 Bean2B. See

@@ -29,7 +29,7 @@ python3.12 -m venv .venv
 
 Agent 通过本地 CLI 调用应用，详见 [Agent 接入说明](agent-usage.md)。
 平台与 Codex CLI 要求见 [Codex 支持](codex-support.md)。问题反馈请在
-[Issues](https://github.com/Bean2B/writing-assistant/issues) 提供虚构例子，公开 repo 不接收 PR。
+[Issues](https://github.com/Bean2B/writing-assistant/issues) 提供虚构例子。PR 仅用于开发者维护。
 
 ## English
 
@@ -60,5 +60,5 @@ retain their own terms in [third-party notices](../THIRD_PARTY_NOTICES.md).
 The local CLI is the Agent's calling interface; see [Agent usage](agent-usage.md).
 For the current platform and Codex CLI requirements, see
 [Codex support](codex-support.md). Report problems with a fictional example in
-[Issues](https://github.com/Bean2B/writing-assistant/issues). This public repository
-does not accept PRs.
+[Issues](https://github.com/Bean2B/writing-assistant/issues). Pull requests are
+reserved for developer maintenance.
