@@ -1,6 +1,6 @@
 # 下载与升级 / Downloads and upgrades
 
-[中文](#中文) · [English](#english)
+[中文首页](../README.md) · [English home](en/README.md) · [中文](#中文) · [English](#english)
 
 ## 中文
 
@@ -28,7 +28,7 @@
 
 ## English
 
-Current public version: [Writing Assistant v0.1.1](https://github.com/Bean2B/writing-assistant/releases/tag/v0.1.1). See the [README](../README.md#english) for features and [Install](install.md#english) for setup.
+Current public version: [Writing Assistant v0.1.1](https://github.com/Bean2B/writing-assistant/releases/tag/v0.1.1). See the [README](en/README.md) for features and [Install](install.md#english) for setup.
 
 ### Choose a download
 

@@ -1,6 +1,6 @@
 # 可恢复的写作任务 / Durable writing tasks
 
-[中文](#中文) · [English](#english)
+[中文首页](../README.md) · [English home](en/README.md) · [中文](#中文) · [English](#english)
 
 ## 中文
 

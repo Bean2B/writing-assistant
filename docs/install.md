@@ -1,10 +1,12 @@
 # 安装 / Installation
 
-[中文](#中文) · [English](#english)
+[中文首页](../README.md) · [English home](en/README.md) · [中文](#中文) · [English](#english)
 
 ## 中文
 
-本页安装 **Writing Assistant v0.1.1**，并建立一个可以开始使用的本地项目。
+安装 **Writing Assistant v0.1.1**，创建本地写作项目，再让 Agent 按[使用说明](agent-usage.md#中文)操作。
+
+[运行要求](#运行要求) · [交给 Codex 安装](#推荐交给-codex-安装) · [自行安装](#自行安装) · [更新与备份](#更新与备份)
 
 ### 运行要求
 
@@ -18,7 +20,11 @@
 
 ### 推荐：交给 Codex 安装
 
-将本页链接交给 Codex，并告诉它项目和数据应放在哪里。Agent 应检查已有安装和项目，按下方步骤校验并安装，然后返回应用路径、项目路径、数据路径，以及尚未满足的 Codex 条件。已有项目保留并复用，不重复初始化。
+把下面的要求交给 Codex，并指定你希望使用的目录：
+
+> 请按本页安装 Writing Assistant。先检查运行环境与已有安装，保留已有项目；确认目录后，下载并校验发行包，完成安装和本地环境检查。最后给我应用路径、项目路径、数据路径，以及开始创作的方法。
+
+Agent 可按下方完整步骤执行。已有项目保留并复用；完成后从 [Agent 使用说明](agent-usage.md#中文)继续。
 
 ### 自行安装
 
@@ -68,7 +74,9 @@ writing-assistant doctor
 
 安装完成后，从[保存一条灵感](records.md)或 [Agent 接入](agent-usage.md)开始。新终端中需再次激活 `.venv`，也可以使用安装时得到的 CLI 完整路径。
 
-### 从源码使用
+<details>
+<summary><strong>从源码使用</strong></summary>
+
 
 在本 repo 的源码目录中，可以直接运行：
 
@@ -86,13 +94,17 @@ python3.12 -m venv .venv
 
 上手文档中的 `writing-assistant` 可以替换为 `.venv/bin/writing-assistant`。源码方式使用 repo 内的 `examples/synthetic/`；从 wheel 安装后，可按[请求格式](interface.md)创建自己的请求文件。
 
+</details>
+
 ### 更新与备份
 
 已有安装请先阅读[下载与升级](release.md)。替换软件前，停止写入并备份项目配置与完整数据目录。不要把创作数据放进安装环境，也不要在项目配置中填写 Codex 登录凭据。
 
 ## English
 
-Install **Writing Assistant v0.1.1** and create a local project ready for use.
+Install **Writing Assistant v0.1.1**, create a local writing project, then give your Agent the [usage guide](agent-usage.md#english).
+
+[Requirements](#requirements) · [Ask Codex to install](#recommended-ask-codex-to-install) · [Manual installation](#manual-installation) · [Updates and backups](#updates-and-backups)
 
 ### Requirements
 
@@ -106,7 +118,11 @@ The application has no third-party Python runtime dependencies. Installation and
 
 ### Recommended: ask Codex to install
 
-Give Codex this page and tell it where to keep the project and data. The Agent should inspect existing installations and projects, verify and install the package using the steps below, then report the executable, project and data paths plus any unmet Codex requirements. Preserve and reuse an existing project instead of initializing it again.
+Give Codex this request and specify your preferred directories:
+
+> Install Writing Assistant using this page. Check compatibility and existing installations first, and preserve existing projects. Once the directories are agreed, download and verify the release package, install it and run the local environment check. Report the executable, project and data paths, and explain how to begin writing.
+
+The complete steps are below for the Agent to follow. Preserve and reuse existing projects, then continue with the [Agent guide](agent-usage.md#english).
 
 ### Manual installation
 
@@ -156,7 +172,9 @@ writing-assistant doctor
 
 Continue with [saving an idea](records.md#english) or [Agent usage](agent-usage.md#english). In a new terminal, activate `.venv` again or use the full installed CLI path.
 
-### Run from source
+<details>
+<summary><strong>Run from source</strong></summary>
+
 
 From the repository's source directory:
 
@@ -173,6 +191,8 @@ python3.12 -m venv .venv
 ```
 
 Replace `writing-assistant` in the guides with `.venv/bin/writing-assistant`. Source usage provides `examples/synthetic/`; after a wheel installation, create a request using the [request format](interface.md#english).
+
+</details>
 
 ### Updates and backups
 

@@ -1,10 +1,21 @@
 # Agent 使用说明 / Agent guide
 
-[中文](#中文) · [English](#english)
+[中文首页](../README.md) · [English home](en/README.md) · [中文](#中文) · [English](#english)
 
 ## 中文
 
 Writing Assistant 通过本地 CLI 为 Agent 提供创作记录、写作 task 和章节 workflow。你给出创作目标并决定采用哪些结果；应用保存输入、阶段顺序、状态和版本关系，Agent 调用所需操作并向你解释结果。
+
+### 先确定本次要完成什么
+
+与 user 确认创作目标、可用材料、期望输出和本次停止位置。新作品可以先讨论题材、人物、基调和篇幅；续写则先找到选定稿件与相关设定。把这些要求写入应用请求，运行结果交回 user 审阅。
+
+| 操作 | 应用提供什么 | Agent 需要做什么 |
+| --- | --- | --- |
+| 整理材料 | 记录、检索、版本和书签 | 选择本次需要的稿件与设定 |
+| 写作与审读 | 准备、执行和保存 task | 填写要求，选择模型，读取结果 |
+| 连续写作 | 维护章节 workflow 的阶段和进度 | 调用下一步并执行返回的 task |
+| 处理反馈 | 保存接受、拒绝或暂缓的选择 | 解释意见，记录 user 的决定 |
 
 ### 开始使用
 
@@ -55,7 +66,9 @@ writing-assistant task --project ../demo-project execute TASK_ID --expected-plan
 
 结果不明时先 `task inspect`。如需根据已保存结果完成本地保存，使用 `task reconcile`；它不再次调用模型。`output_contract_violation` 也可能发生在本地效果已保存之后，应先查看原 task。不要通过换 ID 重发结果未知的任务。详见[恢复](usage.md#中文)与[诊断](diagnostics.md#中文)。
 
-### 发现接口与读取细节
+<details>
+<summary><strong>按需发现接口与读取细节</strong></summary>
+
 
 ```sh
 writing-assistant capabilities --schema request
@@ -66,9 +79,22 @@ writing-assistant capabilities --detail
 
 保存准确 reference，再用 `records read/show` 读取全文。紧凑结果的 `omitted_fields` 表示响应省略了字段，不表示存储内容丢失。任务、workflow、记录和诊断的详细限额见对应页面及 discovery。
 
+</details>
+
 ## English
 
 Writing Assistant gives Agents a local CLI for creative records, writing tasks and chapter workflows. You set the creative goal and choose which results to use. The application stores inputs, phase order, status and version relationships; the Agent invokes the needed operations and explains their results.
+
+### Establish the current writing goal
+
+Agree with the user on the creative goal, available material, expected output and stopping point. For a new work, discuss genre, characters, tone and length. For a continuation, locate the selected draft and relevant settings first. Put these requirements into the application request and return the results for the user to review.
+
+| Operation | Application support | Agent responsibility |
+| --- | --- | --- |
+| Organize material | Records, search, versions and bookmarks | Select the drafts and settings needed now |
+| Write and review | Prepare, execute and save tasks | Supply requirements, choose a model and read results |
+| Continue chapter work | Maintain workflow phases and progress | Request the next step and execute its task |
+| Handle feedback | Save accepted, rejected or deferred choices | Explain observations and record the user's decisions |
 
 ### Get started
 
@@ -119,7 +145,9 @@ Errors normally use exit code `2` with `status: error` and `code` in stderr JSON
 
 Inspect an uncertain task with `task inspect`. Where saved evidence allows local completion, `task reconcile` saves the result without another model call. An `output_contract_violation` can occur after local effects were saved, so inspect the original task first. Do not resend uncertain work under a different ID. See [recovery](usage.md#english) and [diagnostics](diagnostics.md#english).
 
-### Discover details when needed
+<details>
+<summary><strong>Discover interface details when needed</strong></summary>
+
 
 ```sh
 writing-assistant capabilities --schema request
@@ -129,3 +157,5 @@ writing-assistant capabilities --detail
 `--operation`, `--schema` and `--detail` are mutually exclusive. Discovery scans no manuscript and calls no model. `--max-bytes` bounds complete UTF-8 JSON including its newline: default 131072, maximum 1048576. Oversized output returns `capabilities_output_limit`; unknown names return `unknown_capability_operation` or `unknown_capability_schema`. Prefer the specific operation or schema needed next.
 
 Keep exact returned references and read full content with `records read/show`. A compact response's `omitted_fields` describes response omissions, not lost stored content. Each guide and the capability catalog document the relevant limits.
+
+</details>
