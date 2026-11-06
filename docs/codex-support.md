@@ -4,204 +4,150 @@
 
 ## 中文
 
-Agent 调用写作助手的本地 CLI，明确发起 AI 任务时，应用通过另行安装的 Codex CLI
-沿用其已有登录执行请求。保存记录和准备材料可以离线完成，调用契约见
-[Agent 接入说明](agent-usage.md)。
+Writing Assistant 通过另行安装的 Codex CLI 及其已有登录执行 AI 请求。保存记录、准备 task 和查看进度可以离线完成。安装应用不包含 Python、Codex 或登录凭据，见[安装指南](install.md#中文)。
 
-支持的本地环境为 **macOS arm64 与 Python 3.12**。允许使用的 Codex CLI 版本为
-`0.166.0-alpha.6` 和 `0.164.0-alpha.11.1`，其他版本返回 `capability_unsupported`。
-Windows、Linux、desktop、IDE 和 cloud 执行路径不在本接入方式的支持范围内。
+### 支持环境
 
-`doctor` 检查本机版本、帮助信息以及应用共用 launch 配置，不调用模型。配置探查使用临时空
-配置目录，明确关闭 Code Mode 及其 host，不修改全局设置。
-`launch_configuration=feature_flags_verified` 且 `live_supported: true` 表示 CLI 满足这些
-本地要求。兼容字段 `live_supported` 只报告本地资格；`probe_scope` 为
-`local-version-help-and-feature-flags`，`runtime_readiness` 为 `not_checked`。
-probe 不检查所选模型的 runtime tool mode、不认证请求，也不确认生成一定完成。
-配置状态不明或冲突时拒绝 dispatch；实际请求仍可能因登录、模型可用性、服务错误或返回结果而失败。
+| 项目 | 当前支持 |
+| --- | --- |
+| OS / architecture | macOS arm64 |
+| Python | 3.12 |
+| Codex CLI | `0.166.0-alpha.6`、`0.164.0-alpha.11.1` |
 
-`task prepare` 冻结输入，`task inspect` 查询状态，`task execute` 按返回的 plan digest
-发起请求，`task reconcile` 从已保存证据完成本地恢复。旧版顶层 `prepare/execute` 的
-独立行为见 [durable task 说明](tasks.md)。用 `--model` 选择 Codex 账号可以使用的
-模型；省略时使用忽略 user CLI 配置后的默认值，不继承调用方 Agent 的模型。请求模型名
-也不等于已确认的后端模型身份。
-
-用 `--reasoning-effort` 明确选择 `low`、`medium`、`high`、`xhigh`、`max` 或 `ultra`；
-应用把该值冻结到 task，并原样传给 native `model_reasoning_effort`。省略时沿用忽略 user CLI
-配置后的默认值，不从调用方 Agent 继承，也不证明后端实际使用的 effort。native `ultra`
-可能包含自动 delegation；可见 delegation 仍按 `capability_unsupported` 处理，不静默替换 effort。
-
-每次任务使用新的 Codex 上下文，交给它的项目材料由你选择。Codex 自身的系统、全局
-user 和安全指令仍可能参与，准备结果不能展示全部 Codex 上下文。工具不修改你的全局
-Codex 规则或配置。
-
-应用只转交下方英文参考表中列出的环境变量，保留已有登录、proxy/bypass routing 和 CA 设置，不读取
-登录存储或 keychain 内容，也不转交无关 API key、token、调用方 bridge 或任意环境变量。
-这只约束应用传给 subprocess 的环境；OS/runtime 可能自行增加字段，普通 OS 文件访问权限
-仍然存在，不能据此声称具有 OS 或 network isolation。可观察到的工具调用和 delegation
-返回 `capability_unsupported`；未暴露的 provider 活动及未来协议形式不在此观察结论内。
-
-默认本地超时为 120 秒，`--timeout` 最大 600 秒；这不等于 token 或费用上限。
-输入、可见输出和诊断记录保存在本地，生成内容需要审读。超时、取消、无效输出和结果
-不明会报错，不自动重发。本地进程结束不证明远端服务已经停止。文件系统故障也可能
-导致结果或诊断保存不完整，应保留已有输入和记录，按[使用与恢复](usage.md)核对结果。
-执行期间识别到 `turn.failed` 会及时停止本地进程并保留诊断。`item.completed` 中的 error，
-包括 Code Mode host-disabled 诊断，可能出现在成功文字 turn 之前；应用保留它，但不据此停止
-进程或判定整个请求的结果。完成仍要求成功的 terminal turn、正常进程退出及完整有效的最终输出。
-未知或部分 stream 仍受原有 timeout、取消和输出边界约束。
-诊断 stream/probe 中识别到的 proxy/CA 片段会被过滤，并标记 redacted/incomplete；长度和
-digest 描述保留字节。final-message artifact 的字节不受该过滤影响，完整性由独立的
-`output_complete` 说明。`streams_complete=false` 不能替代该判断。形似已知私人片段的
-usage metadata 可能被省略；过滤无法识别所有 secret，显式 raw content read 仍保持授权
-内容的原始字节。
-
-receipt 的 `observation_summary.elapsed` 返回 `value`、`unit: seconds` 和
-`scope: local_codex_adapter_after_qualification`，表示 qualification 之后 adapter
-本地生命周期的观测耗时，包含本地停止、stream draining 和最终输出读取；不包含
-qualification 或后续记录保存，也不表示整个 task、模型计算或网络耗时。没有观测值时，
-包括 qualification 失败，`value` 为 `null`，不会补成零。`usage_status` 区分
-`reported`、`unavailable`、`redacted`，既有 `usage` 保留 provider 报告的 metadata；
-缺失或经过过滤不表示没有消耗 token。`cost` 保持 `status: unknown`、`amount: null`、
-`currency: null`；应用没有受支持的收费证明，也不按 token 估价。成功、失败、timeout
-和 unknown 的新 receipt 使用同一摘要；reconciliation 只复用保存事实。旧 receipt
-可能没有该字段，表示当时未记录，不会为回填摘要改写历史字节。
-
-## English
-
-An Agent invokes Writing Assistant's local CLI. When it explicitly requests an
-AI task, the application uses a separately installed Codex CLI with its existing
-authentication. Saving records and preparing material work offline. The calling
-contract is described in the [Agent interface guide](agent-usage.md).
-
-#### Supported environment
-
-The supported local environment is **macOS arm64 with Python 3.12**. Accepted
-Codex CLI builds are `0.166.0-alpha.6` and `0.164.0-alpha.11.1`. Other builds are
-rejected as `capability_unsupported`. Windows, Linux, desktop, IDE, and cloud
-execution paths are outside this integration's support scope.
-
-Run `writing-assistant doctor` before an AI task. It checks local version and
-help output and the application's launch configuration without calling a model.
-It uses the same launch overrides for a local feature-state probe in a temporary
-empty configuration root. Both `features.code_mode.enabled` and `code_mode_host`
-are disabled for these no-tool tasks. This leaves the user's global settings
-unchanged. `launch_configuration=feature_flags_verified` and `live_supported: true`
-mean the installed CLI meets these local requirements. The compatibility field
-`live_supported` reports only this local qualification: `probe_scope` is
-`local-version-help-and-feature-flags` and `runtime_readiness` is `not_checked`.
-The probe does not check the selected model's runtime tool mode, authenticate a
-request, or establish that generation will complete. Unknown or incompatible
-feature state refuses dispatch; a request can still fail because of sign-in,
-model availability, service errors, or its result.
-
-#### Choose a model and inspect the input
+其他 Codex build 返回 `capability_unsupported`。此集成的执行入口是本地 Codex CLI；Windows、Linux、desktop、IDE 与 cloud 执行路径不在支持范围内。
 
 ```sh
-writing-assistant capabilities --project ../demo-project
-writing-assistant task --project ../demo-project prepare examples/synthetic/request.json --model MODEL
+writing-assistant doctor
+```
+
+Doctor 检查本机版本、帮助和应用的 launch 配置，不调用模型。它使用临时空配置目录探查 Code Mode 及其 host 已关闭，不修改全局设置。`live_supported: true`、`launch_configuration: feature_flags_verified` 表示通过本地检查；`probe_scope: local-version-help-and-feature-flags`、`runtime_readiness: not_checked` 说明尚未验证实际请求。登录、所选模型、runtime tool mode 或服务仍可能导致执行失败。
+
+### 选择模型与 effort
+
+```sh
+writing-assistant task --project ../demo-project prepare request.json --model MODEL --reasoning-effort high --timeout 120
 writing-assistant task --project ../demo-project inspect TASK_ID
 writing-assistant task --project ../demo-project execute TASK_ID --expected-plan-sha256 PLAN_SHA256
 ```
 
-`task prepare` does not send the task. Copy the returned task ID and plan digest
-into the inspect/execute calls. See [durable tasks](tasks.md) for saved-byte
-recovery and the separate legacy top-level `prepare/execute` behavior.
-Use `--model` to select a model available to
-your Codex account. If omitted, the CLI default is used with user CLI
-configuration ignored; it does not inherit the model selected in your current
-Agent's context. The requested model name is not confirmation of the backend model identity.
+将 `MODEL` 换成账号可用的选定模型，并复制返回的 task ID 与 plan digest。准备不发送请求，详见[可恢复任务](tasks.md#中文)。
 
-`--reasoning-effort` explicitly selects `low`, `medium`, `high`, `xhigh`, `max` or
-`ultra` and passes it unchanged as `model_reasoning_effort`. The task freezes this
-choice independently of the model. Omission uses the CLI default with user
-configuration ignored. The calling Agent's effort is not inherited, and requested
-effort does not attest the backend's setting. Codex's native `ultra` can involve
-automatic delegation; exposed delegation still returns `capability_unsupported`.
-An unavailable model/effort combination is not silently replaced.
+`--reasoning-effort` 接受 `low`、`medium`、`high`、`xhigh`、`max`、`ultra`，原样传给 Codex `model_reasoning_effort`，与模型一起冻结在 task。省略任一设置时使用忽略 user CLI 配置后的 CLI 默认值，不继承当前 Agent 的设置。请求值不证明后端实际模型或 effort；不可用组合不会静默替换。Native `ultra` 可能包含自动 delegation，可观察到的 delegation 仍返回 `capability_unsupported`。
 
-Each task starts a fresh Codex context. The tool passes the selected project
-material, while Codex can still apply its own system, global user, and safety
-instructions. Inspecting the prepared input does not reveal all of Codex's
-context. The tool does not edit your global Codex rules or configuration.
+每个 task 启动新的 Codex context，并传入选定项目材料。Codex 自身的系统、全局 user 和安全指令仍可能参与，准备结果不能展示全部 Codex context。应用不修改你的全局 Codex 规则或配置。
 
-#### Subprocess environment and observable activity
+### 环境与数据访问
 
-The application forwards only these environment names when present:
+应用只向 subprocess 转交以下已存在的变量：
+
+| 用途 | 名称 |
+| --- | --- |
+| 可执行文件、账号与认证目录 | `PATH`, `HOME`, `CODEX_HOME` |
+| Locale | `LANG`, `LANGUAGE`, `LC_ALL`, `LC_COLLATE`, `LC_CTYPE`, `LC_MESSAGES`, `LC_MONETARY`, `LC_NUMERIC`, `LC_TIME` |
+| 临时目录 | `TMPDIR`, `TMP`, `TEMP` |
+| 已有 proxy / bypass routing | `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY` 及小写形式 |
+| 自定义 CA 路径 | `CODEX_CA_CERTIFICATE`, `SSL_CERT_FILE` |
+
+应用不读取登录存储或 keychain 内容，不转交无关 API key/token、`PYTHONPATH`、`PYTHONHOME`、shell/loader controls、调用方 bridge 或任意前缀变量。依赖被排除变量的 wrapper 不在支持范围内。
+
+以上约束应用传入的环境，OS/runtime 仍可能增加字段。Codex 保留账号认证、routing、trust 配置及普通 OS 权限；这不提供 OS 或 network isolation。可见 command/file/MCP/web/delegation 活动会被拒绝为 `capability_unsupported`，本地观察无法证明未暴露的 provider 活动。发送到服务的材料与本地保存内容见[隐私](privacy.md#中文)。
+
+### 耗时、费用与失败恢复
+
+默认本地 timeout 为 120 秒，`--timeout` 要求大于 0、至多 600 秒。它不构成 token 或费用上限；本地进程停止也不证明远端计算停止。未知结果不自动重发，先查看保存状态与引用。
+
+| 错误 | 含义与下一步 |
+| --- | --- |
+| `codex_missing` | 找不到可执行文件，检查安装与 `PATH`。 |
+| `capability_unsupported` | build、必要能力或暴露的工具活动不受支持，运行 doctor。 |
+| `codex_model_failure` | CLI 或模型报告 terminal failure，保留 receipt。 |
+| `codex_timeout`、`codex_cancelled` | 本地 deadline 或中断，先查看保存结果。 |
+| `codex_malformed` | 最终输出缺失、无效或超限。 |
+| `codex_unknown` | 无法确认完成状态，保留现有 task，勿换 ID 重发。 |
+
+运行时 `turn.failed` 会停止本地进程并保留诊断；`item.completed` 中的 error 可能先于成功文字 turn，单独出现不判定整个 task 失败。完成要求成功 terminal turn、正常退出及完整有效的最终输出。未知或部分 stream 仍受 timeout、取消与输出限制。
+
+诊断 stream/probe 中识别到的 proxy/CA 片段会被过滤；redacted/completeness 标记描述保留字节。最终文本有独立的 `output_complete`，不能从 `streams_complete` 推断。Usage metadata 也可能被过滤；此机制不能识别所有私密内容。显式原文读取保持获准内容的原始 bytes。
+
+Receipt 的 `observation_summary` 包含：
+
+- `elapsed`：`unit: seconds`、`scope: local_codex_adapter_after_qualification`，从资格检查结束后计入 adapter 的本地执行、停止、stream draining 与最终输出读取；不含资格检查或后续存储，也不是整个 task、模型计算或网络耗时。未观测时 `value: null`。
+- `usage_status`：`reported`、`unavailable` 或 `redacted`；provider 报告保存在独立 `usage`。缺失不表示消耗为零。
+- `cost`：`status: unknown`、`amount: null`、`currency: null`。应用不提供收费证明，也不根据 token 估价。
+
+成功、失败和不确定的新 receipt 使用同一摘要；reconcile 复用保存事实。历史 receipt 可缺少摘要，不回填历史 bytes。存储故障可能留下不完整结果，恢复步骤见[使用说明](usage.md#中文)。
+
+## English
+
+Writing Assistant executes AI requests through a separately installed Codex CLI and its existing sign-in. Saving records, preparing tasks and inspecting progress work offline. The application does not bundle Python, Codex or credentials; see [installation](install.md#english).
+
+### Supported environment
+
+| Component | Current support |
+| --- | --- |
+| OS / architecture | macOS arm64 |
+| Python | 3.12 |
+| Codex CLI | `0.166.0-alpha.6`, `0.164.0-alpha.11.1` |
+
+Other Codex builds return `capability_unsupported`. This integration executes through the local Codex CLI. Windows, Linux, desktop, IDE and cloud execution paths are outside its support scope.
+
+```sh
+writing-assistant doctor
+```
+
+Doctor checks local version, help and application launch configuration without calling a model. A temporary empty configuration directory verifies that Code Mode and its host are disabled, leaving global settings unchanged. `live_supported: true` and `launch_configuration: feature_flags_verified` report successful local checks. `probe_scope: local-version-help-and-feature-flags` and `runtime_readiness: not_checked` mean no actual request was verified. Sign-in, the selected model, runtime tool mode or service can still cause execution to fail.
+
+### Choose a model and inspect the input
+
+```sh
+writing-assistant task --project ../demo-project prepare request.json --model MODEL --reasoning-effort high --timeout 120
+writing-assistant task --project ../demo-project inspect TASK_ID
+writing-assistant task --project ../demo-project execute TASK_ID --expected-plan-sha256 PLAN_SHA256
+```
+
+Replace `MODEL` with the selected model available to the account. Copy the returned task ID and plan digest. Preparation does not send a request; see [durable tasks](tasks.md#english).
+
+`--reasoning-effort` accepts `low`, `medium`, `high`, `xhigh`, `max`, `ultra`, passed unchanged as Codex `model_reasoning_effort` and frozen with the model in the task. Omitted settings use CLI defaults with user CLI configuration ignored, without inheriting the calling Agent's settings. Requested values do not attest backend model identity or effort; unavailable combinations are not silently replaced. Native `ultra` can involve automatic delegation; exposed delegation still returns `capability_unsupported`.
+
+Each task starts a fresh Codex context with selected project material. Codex can still apply its own system, global user and safety instructions. Prepared input does not reveal all Codex context. The application does not edit your global Codex rules or configuration.
+
+### Subprocess environment and observable activity
+
+The application forwards only these existing environment variables:
 
 | Purpose | Names |
 | --- | --- |
-| Executable/account/auth directories | `PATH`, `HOME`, `CODEX_HOME` |
+| Executable, account and auth directories | `PATH`, `HOME`, `CODEX_HOME` |
 | Locale | `LANG`, `LANGUAGE`, `LC_ALL`, `LC_COLLATE`, `LC_CTYPE`, `LC_MESSAGES`, `LC_MONETARY`, `LC_NUMERIC`, `LC_TIME` |
 | Temporary directories | `TMPDIR`, `TMP`, `TEMP` |
-| Existing routing/bypass | `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY` and their lowercase forms |
+| Existing proxy / bypass routing | `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY` and lowercase forms |
 | Custom CA paths | `CODEX_CA_CERTIFICATE`, `SSL_CERT_FILE` |
 
-It does not add or change proxy routing, inspect auth-store/keychain contents,
-or forward unrelated API keys/tokens, `PYTHONPATH`/`PYTHONHOME`, shell/loader
-controls, bridge identifiers or arbitrary `CODEX_*`/`LC_*` variables. Existing
-CLI account authentication remains the supported route. Undocumented wrappers
-that require excluded variables are outside this boundary.
+It does not read auth-store or keychain contents, or forward unrelated API keys/tokens, `PYTHONPATH`, `PYTHONHOME`, shell/loader controls, caller bridges or arbitrary prefixed variables. Wrappers requiring excluded variables are unsupported.
 
-This controls the environment supplied by the application; the OS/runtime may
-synthesize its own fields. The retained account/auth, routing and trust inputs,
-and ordinary OS access permissions remain available to Codex. No OS or network
-isolation is established. Exposed command/file/MCP/web/delegation tool activity
-is classified as `capability_unsupported`. Unexposed provider activity and future
-protocol forms cannot be established from local observations.
+This bounds the environment supplied by the application; the OS/runtime can add fields. Codex retains account authentication, routing, trust settings and ordinary OS permissions. This provides no OS or network isolation. Exposed command/file/MCP/web/delegation activity is rejected as `capability_unsupported`; local observation cannot establish unexposed provider activity. See [privacy](privacy.md#english) for material sent to the service and local storage.
 
-#### Timeouts, results, and interrupted work
+### Timeouts, results, and interrupted work
 
-Requests have a 120-second local deadline by default. `--timeout` accepts more
-than 0 and at most 600 seconds. These local limits are not a token or cost ceiling.
+The default local timeout is 120 seconds. `--timeout` must be greater than 0 and at most 600 seconds. It is not a token or cost ceiling; stopping a local process does not prove remote computation stopped. Uncertain results are not automatically resent. Inspect saved status and references first.
 
-Inputs, exposed output, and diagnostics are saved locally. Review generated
-text before using it. A timeout, cancellation, invalid output, or uncertain
-completion is reported as an error. A locally stopped process does not prove
-that the remote service stopped computing.
-Supported terminal JSONL errors are detected while the process runs. A
-`turn.failed` triggers local stopping and retains the exposed diagnostics promptly,
-before the local deadline. An `item.completed` error, including the Code Mode
-host-disabled diagnostic, can precede a successful text turn. It is retained
-without stopping the process or deciding the whole request's result. Completion
-still requires a successful terminal turn, process exit, and complete valid final
-output. Unknown or partial streams remain subject to the ordinary timeout,
-cancellation and output bounds.
-Diagnostic stdout/stderr and probe messages can be filtered for recognized
-configured proxy/CA fragments. `stdout_redacted`/`stderr_redacted`, probe
-`redacted`, and completeness flags identify altered or incomplete diagnostics.
-`streams_complete=false` does not itself describe final-message completeness;
-the separate unchanged output artifact has `output_complete`. Recognized private
-fragments in provider usage metadata can cause that metadata to be omitted.
-This filtering is bounded and does not scan authentication stores or detect every
-possible secret. Ordinary writing results expose references rather than bodies;
-explicit raw content reads preserve authorized content bytes.
-
-Receipts include an `observation_summary`. Its `elapsed` contains `value`,
-`unit: seconds`, and `scope: local_codex_adapter_after_qualification`. This is the
-recorded local adapter lifecycle after qualification, including process stopping,
-stream draining and final-output reading. It excludes qualification and later
-record storage; it is not total task latency, model compute time or network time.
-An unmeasured value, including qualification failure, is `null` rather than zero.
-`usage_status` is `reported`, `unavailable` or `redacted`; the separate `usage`
-retains reported provider metadata. Unavailable or redacted usage does not imply
-that no tokens were consumed. `cost` has `status: unknown`, `amount: null` and
-`currency: null`: the application has no supported charge attestation and does
-not estimate a price from tokens. These facts apply to saved failed/timeout/
-unknown attempts as well as successful ones. Reconciliation uses saved facts
-without dispatching again. Older saved receipts can omit the summary; omission
-means not recorded, and their original bytes are not rewritten to backfill it.
-
-| Code | Meaning |
+| Error | Meaning and next step |
 | --- | --- |
-| `codex_missing` | The local executable was not found. |
-| `capability_unsupported` | The build, required capability, or exposed tool activity is unsupported. |
-| `codex_model_failure` | The CLI or model reported a terminal failure. |
-| `codex_timeout` | The local deadline was reached. |
-| `codex_cancelled` | An interruption or cancellation was observed. |
-| `codex_malformed` | The output was missing, invalid, or too large. |
-| `codex_unknown` | Completion could not be established. |
+| `codex_missing` | Executable not found; check installation and `PATH`. |
+| `capability_unsupported` | Unsupported build, required capability or exposed tool activity; run doctor. |
+| `codex_model_failure` | CLI or model reported terminal failure; retain the receipt. |
+| `codex_timeout`, `codex_cancelled` | Local deadline or interruption; inspect saved results first. |
+| `codex_malformed` | Final output is missing, invalid or oversized. |
+| `codex_unknown` | Completion cannot be established; preserve the task and do not resend with a new ID. |
 
-The tool does not automatically resend a request with an uncertain outcome.
-Keep its input and saved records, then inspect the result before starting more
-work. A filesystem failure can prevent a complete result or diagnostic record
-from being saved. See [recovery](usage.md) and [privacy](privacy.md).
+A runtime `turn.failed` stops the local process and retains diagnostics. An `item.completed` error can precede a successful text turn; alone it does not fail the whole task. Completion requires a successful terminal turn, normal exit and complete valid final output. Unknown or partial streams remain subject to timeout, cancellation and output limits.
+
+Recognized proxy/CA fragments in diagnostic streams/probes are filtered, with redacted/completeness flags describing retained bytes. Final text has its own `output_complete`; `streams_complete` cannot establish it. Usage metadata may also be filtered. Filtering cannot identify all private content; explicit original-content reads preserve authorized bytes.
+
+A receipt's `observation_summary` contains:
+
+- `elapsed`: `unit: seconds`, `scope: local_codex_adapter_after_qualification`. It measures the adapter's local lifecycle after qualification, including execution, stopping, stream draining and final-output reading. It excludes qualification and later storage; it is not total task, model compute or network time. Unmeasured `value` is `null`.
+- `usage_status`: `reported`, `unavailable` or `redacted`; the separate `usage` retains provider-reported metadata. Missing usage does not mean zero consumption.
+- `cost`: `status: unknown`, `amount: null`, `currency: null`. The application provides no charge attestation or token-based price estimate.
+
+New successful, failed and uncertain receipts use the same summary; reconciliation reuses saved facts. Historical receipts can omit it and are not rewritten. Storage failures can leave incomplete results; see [recovery](usage.md#english).

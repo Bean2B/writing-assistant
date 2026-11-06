@@ -1,148 +1,209 @@
-# 故事上下文
+# 写作上下文 / Story context
 
 [中文](#中文) · [English](#english)
 
 ## 中文
 
-故事上下文从明确给出的准确原文引用和当前 state 选择有上限的材料。它不扫描私人资料库、不隐式寻找最新章节，也不以摘要替代旧原文。
+Story context 把选定的 Story state、近期章节和较早原文整理成一份有大小上限的写作材料。Agent 可以明确指定本次续写需要哪些版本，并检查哪些材料因预算或标签匹配被排除。
 
-### 请求与选择
+这是 Python API。`story_context.build` 保存选材记录并返回可交给 `tasks.prepare` 的材料；两者都不调用模型。需要固定单篇草稿和待续问题时，也可使用[创作记录书签](records.md#中文)。
 
-`story_context.build(project, request)` 保存 selection receipt，不调用模型；`build_in_store(store, scope, request)` 复用已有 live scope/resolver。Schema 为 `writing-assistant-story-context-request/1`，要求 `context_id`、`project_id`。
+### 从准确版本准备一次续写
 
-| 可选字段 | 用途 |
-| --- | --- |
-| `state` | `{ref, entry_ids?, tags?}`；null 表示不选 state |
-| `recent_chapters` | 明确 `{ref, chapter}`，选择完整章节原文 |
-| `earlier_prose` | `{ref, reason, tags?, span?}`；span 为原文 `{start, end, sha256}` |
-| `tags` | 对明确旧原文索引的相关性标签 |
-| `max_bytes` | 材料连同完整 receipt JSON 的总上限，默认/最大 262144 |
-| `max_items` | 包含 receipt 本身的项目数，默认/最大 24 |
+先按[安装指南](install.md#中文)初始化 `../demo-project`（project ID 为 `demo`），按[Story state](story-state.md#中文)创建 `journey`。将虚构章节和开篇片段保存到记录中：
 
-每个来源列表最多 64 项，合计最多 96 项；recent chapter 号唯一且为 1–20000。原文 kind 为 `prose`、`draft` 或 `fragment`，引用属于同一项目。Span 使用半开 byte 范围、独立 digest 和 UTF-8 边界；完整原文引用保留。选定 state 和证据必须仍可访问且 current。
+```sh
+writing-assistant records --project ../demo-project save chapter-1.txt --operation-id chapter-1 --kind prose --title "Chapter 1" > chapter-1.json
+writing-assistant records --project ../demo-project save opening.txt --operation-id opening --kind fragment --title "Opening detail" > opening.json
+```
 
-选定 state 优先，其次为明确索引中较新的 recent chapter，再按输入顺序考虑旧原文。带 tags 的旧原文不匹配时，在 metadata/body 读取前排除；没有 tags 的项目仍是有 reason 的明确选择。标签不等于语义或文学质量判断。
-
-预算不足时从最低优先级原文排除，receipt 写明 `budget`、`item-limit`、`unmatched-tags` 或 `duplicate`。预算排除的正文不被读取。State 不被裁短；即使不含原文，receipt 仍放不下时返回 `story_context_budget_exceeded`。Receipt 自身占预算和一个 item。
-
-结果包含准确 `reference`、`packet`、`material_bytes`，以及供 task preparation 使用的 `materials`、`bindings`、`ranges`。所选 state、原文 ref、片段起止、digest、选择理由与排除项都可核对。完整原文 ref 不代表允许向模型显示或引用未选中的 bytes。
-
-### 恢复
-
-相同 `context_id` 与输入重用准确 receipt，并重核 state 和原文；不同输入为 `story_context_operation_conflict`。`inspect(project, reference)` 重读准确保存的选择。State 过时为 `stale_story_state`；原件丢失或 span digest 不符时失败，不报告已完成覆盖。
-
-这些材料可交给 `tasks.prepare`，它仍不执行模型。新 state 的使用必须是新的明确 context 操作，不能把已保存 task 隐式改指其他版本。备份和恢复使用既有完整数据目录；新目录身份需要新的 scope。详见 [story-context schema](../schemas/story-context-v1.schema.json) 和 [task](tasks.md)。
-
-## English
-
-Story context selects bounded exact original prose alongside an explicitly
-selected current story-state snapshot. Its only source index is the request's
-exact references. It never scans an unrelated private library, discovers an
-implicit latest chapter, or replaces an earlier original with a summary.
-
-### Request
-
-`story_context.build(project, request)` writes a selection receipt in Creative
-Records and dispatches no model. `build_in_store(store, scope, request)` uses an
-existing live scope and resolver. A workflow can supply its saved chapter index
-directly without asking the calling Agent to reconstruct chapter history.
-
-The request's `schema_version` is `writing-assistant-story-context-request/1`.
-`context_id` and `project_id` are required. Optional fields are:
-
-| Field | Meaning |
-| --- | --- |
-| `state` | `{ref, entry_ids?, tags?}` selecting one current exact story-state snapshot; `null` selects no state |
-| `recent_chapters` | Explicit `{ref, chapter}` entries; complete original chapter bodies |
-| `earlier_prose` | Explicit `{ref, reason, tags?, span?}` entries; a span is `{start, end, sha256}` over original bytes |
-| `tags` | Declared relevance tags for the earlier source index |
-| `max_bytes` | Total selected material bytes including the complete receipt JSON; default and ceiling 262144 |
-| `max_items` | Material count including the receipt itself; default and ceiling 24 |
-
-At most 64 entries in each source list and 96 combined are accepted. Recent
-chapter numbers are unique and range from 1 to 20000. Prose records must have
-kind `prose`, `draft` or `fragment`. All references belong to the selected project.
-An earlier span is a half-open range, with its own digest; its full original
-reference stays intact. UTF-8 decoding must succeed at the selected boundaries.
-The saved state and selected evidence must still be available and current.
+在应用的 Python 环境中运行：
 
 ```python
-from writing_assistant import story_context, tasks
+import json
+from pathlib import Path
+from writing_assistant import story_context, story_state, tasks
+
+project = "../demo-project"
+state = story_state.inspect(project, "journey")
+chapter_1 = json.loads(Path("chapter-1.json").read_bytes())["ref"]
+opening = json.loads(Path("opening.json").read_bytes())["ref"]
 
 context = story_context.build(project, {
     "schema_version": "writing-assistant-story-context-request/1",
     "context_id": "journey-chapter-2-draft",
-    "project_id": "example",
-    "state": {"ref": state_reference},
-    "recent_chapters": [{"ref": chapter_1_reference, "chapter": 1}],
-    "earlier_prose": [{"ref": opening_reference,
-                       "reason": "Original crossing detail", "tags": ["river"],
-                       "span": {"start": byte_start, "end": byte_end,
-                                "sha256": selected_span_digest}}],
-    "tags": ["river"]
+    "project_id": "demo",
+    "state": {"ref": state["reference"], "entry_ids": ["chapter-purpose"]},
+    "recent_chapters": [{"ref": chapter_1, "chapter": 1}],
+    "earlier_prose": [{
+        "ref": opening,
+        "reason": "Keep the original crossing detail available.",
+        "tags": ["river"]
+    }],
+    "tags": ["river"],
+    "max_bytes": 262144,
+    "max_items": 24
 })
 
 request = {
     "schema_version": "writing-assistant-request/1",
     "request_id": "journey-chapter-2-draft",
-    "project_id": "example", "kind": "writing", "phase": "draft",
+    "project_id": "demo",
+    "kind": "writing", "phase": "draft",
     "request": "Write the next chapter using the selected context.",
     "materials": context["materials"]
 }
-prepared = tasks.prepare(project, request, bindings=context["bindings"],
-                         ranges=context["ranges"])
+prepared = tasks.prepare(
+    project, request, bindings=context["bindings"], ranges=context["ranges"],
+)
 ```
 
-`tasks.prepare` remains an unexecuted saved task. Only the existing explicit task
-execution operation dispatches a model.
+先检查 `context["packet"]` 的 `selected` 和 `excluded`，再执行已准备的任务。`prepared` 是已保存但尚未执行的 task；执行方法与恢复见[持久任务](tasks.md#中文)。[持久 workflow](workflows.md#中文)也可以直接使用它保存的章节索引准备上下文。
 
-### Selection and exclusions
+### 如何选择材料
 
-The application keeps selected state first, then gives newest explicitly indexed
-recent chapters priority, then considers earlier prose in the supplied order.
-An earlier indexed item with declared tags that do not intersect the requested
-tags is excluded before metadata or original reads. An untagged earlier item is
-an explicit selection with its supplied reason. No semantic relevance or literary
-quality is inferred from the presence of a tag.
+选择顺序为：选定 state → 明确索引中较新的 recent chapter → 按输入顺序排列的 earlier prose。应用只考虑请求中的准确引用，不搜索资料库或隐式挑选“最新章节”。
 
-The complete receipt and all selected original bytes must fit both bounds.
-Lowest-priority prose items are excluded until the actual packet fits. State
-is never silently trimmed to fit: a receipt too large even without prose fails
-with `story_context_budget_exceeded`. A smaller explicit state selection or larger
-permitted budget is necessary. Receipt overhead counts even when no prose fits.
+| 请求字段 | 用途 |
+| --- | --- |
+| `state` | `{ref, entry_ids?, tags?}` 选择一个当前准确 snapshot；省略或 `null` 表示不选 state。 |
+| `recent_chapters` | `{ref, chapter}` 选择完整章节原文；chapter 唯一，范围 1–20000。 |
+| `earlier_prose` | `{ref, reason, tags?, span?}` 选择较早原文，注明选用理由。 |
+| `tags` | 与 earlier prose 的明确 tags 匹配，不做语义推断。 |
+| `max_bytes` | 材料与完整选材记录 JSON 的总预算，默认及最大 262144 bytes。 |
+| `max_items` | 材料数量，包含选材记录本身，默认及最大 24。 |
 
-`packet.state` contains the selected state and its exact source reference.
-`packet.selected` contains `category`, original `ref`, `start`, `end`, selected
-`sha256` and the selection `reason`; recent items also have `chapter`, and tag
-matches record `matched_tags`. `packet.excluded` reports only original reference,
-category, `reason` (`budget`, `item-limit`, `unmatched-tags` or `duplicate`) and
-known byte count. Excluded original prose is never included in the receipt or
-returned result. Budget-excluded originals are not opened for body reads.
+原文 kind 必须为 `prose`、`draft` 或 `fragment`，所有引用属于同一 project。每个来源列表最多 64 项，合计最多 96 项。带 tags 的 earlier prose 没有匹配时，在 metadata 或正文读取前排除；不带 tags 的项目按明确给定的 reason 参与选择。
 
-The result provides the receipt `reference`, `packet`, precise `material_bytes`,
-and arrays `materials`, `bindings` and `ranges` for durable task preparation.
-The receipt is a `request-material`; exact selected originals are `prior-prose`
-materials. Material hashes authenticate selected byte ranges while each binding
-retains the complete immutable original reference. Evidence review must use the
-same visible ranges; a full original reference does not authorize citing unseen
-bytes from that original.
+只需片段时，在 earlier prose 上指定 `span: {"start": START, "end": END, "sha256": DIGEST}`。起止为原文半开 byte 范围，digest 对应选中片段，边界须能完整解码为 UTF-8。完整原文 reference 保留，用于核对版本。
 
-### Exact recovery
+### 检查输出与排除原因
 
-`context_id` names an immutable selection operation. Retrying identical inputs
-authenticates the saved state and selected originals and returns the same receipt.
-Changing inputs under the same ID fails with `story_context_operation_conflict`.
-`inspect(project, reference)` rereads the exact receipt and original selected
-bytes. Changed current state fails with `stale_story_state`; lost originals or
-invalid span digests fail rather than returning successful coverage. Selecting
-newer state is an explicit new context operation, not implicit retargeting of a
-saved task.
+| 结果字段 | 如何使用 |
+| --- | --- |
+| `reference` | 保存的准确选材记录引用，供恢复和检查。 |
+| `packet.state` | 选定条目及其准确 state reference。 |
+| `packet.selected` | 原始 `ref`、`category`、`start`、`end`、片段 `sha256` 和 `reason`；近期章节还含 `chapter`，标签匹配含 `matched_tags`。 |
+| `packet.excluded` | 原始 reference、category、reason 与已知 byte 数，不包含排除的正文。 |
+| `material_bytes` | 本次选中材料的准确总大小。 |
+| `materials`, `bindings`, `ranges` | 一起传给 `tasks.prepare`，保留准确原件与可见范围。 |
 
-Selection receipts, state and originals use the existing data directory and
-RecordStore. A complete quiesced file backup retains them together; reading a
-copy-back requires a fresh scope bound to the restored directory identity.
-These operations do not adopt generated content, update formal World facts or
-provide a literary correctness judgment.
+排除原因包括 `budget`、`item-limit`、`unmatched-tags`、`duplicate`。预算不足时从最低优先级原文开始排除；预算排除的正文不会被打开。State 不被悄悄裁短。即使不含原文，完整选材记录仍放不下时，返回 `story_context_budget_exceeded`；缩小明确 state 选择，或在允许上限内增加预算。
 
-See `schemas/story-context-v1.schema.json`, [story state](story-state.md) and
-[durable tasks](tasks.md) for the supported contracts.
+选材记录本身作为 `request-material` 占用 bytes 和一个 item；选中原文作为 `prior-prose`。完整原文 reference 不允许模型引用未显示的 bytes，审读引用也应使用同样的可见范围。材料发送给 Codex 的边界见[隐私说明](privacy.md#中文)。
+
+### 恢复准确选择
+
+`story_context.inspect(project, context["reference"])` 重新读取已保存选择。已有 `RecordStore` 与 live `Scope` 的调用方可使用 `build_in_store`。
+
+| 情况 | 如何处理 |
+| --- | --- |
+| 同一个 `context_id`、相同输入 | 重新校验 state 与原文，返回原来准确选材记录。 |
+| `story_context_operation_conflict` | 同 ID 的输入已改变；新选择使用新的 context ID。 |
+| `stale_story_state` | 查看当前 state，为新选择创建新的 context 操作和 task；已有 task 不会自动改指新状态。 |
+| 原件丢失、digest 或 UTF-8 边界不符 | 恢复准确原件或修正明确范围，再重新准备。失败不能当作已完成覆盖。 |
+
+备份选材记录、state 和原件时，保留完整静止的数据目录；恢复到新目录身份后重新获取 scope。字段定义见 [story-context schema](../schemas/story-context-v1.schema.json)。
+
+## English
+
+Story context assembles selected story state, recent chapters, and earlier original prose within an explicit size budget. An Agent chooses the exact versions for a writing task and can inspect material omitted for budget or tag matching.
+
+This is a Python API. `story_context.build` saves a selection receipt and returns material for `tasks.prepare`; neither operation calls a model. For a single selected draft and continuation questions, [Creative Records bookmarks](records.md#english) are another entry point.
+
+### Prepare a continuation from exact versions
+
+Initialize `../demo-project` with project ID `demo` using [installation](install.md#english), and create `journey` using the [story-state guide](story-state.md#english). Save a fictional chapter and opening fragment:
+
+```sh
+writing-assistant records --project ../demo-project save chapter-1.txt --operation-id chapter-1 --kind prose --title "Chapter 1" > chapter-1.json
+writing-assistant records --project ../demo-project save opening.txt --operation-id opening --kind fragment --title "Opening detail" > opening.json
+```
+
+Run this in the application's Python environment:
+
+```python
+import json
+from pathlib import Path
+from writing_assistant import story_context, story_state, tasks
+
+project = "../demo-project"
+state = story_state.inspect(project, "journey")
+chapter_1 = json.loads(Path("chapter-1.json").read_bytes())["ref"]
+opening = json.loads(Path("opening.json").read_bytes())["ref"]
+
+context = story_context.build(project, {
+    "schema_version": "writing-assistant-story-context-request/1",
+    "context_id": "journey-chapter-2-draft",
+    "project_id": "demo",
+    "state": {"ref": state["reference"], "entry_ids": ["chapter-purpose"]},
+    "recent_chapters": [{"ref": chapter_1, "chapter": 1}],
+    "earlier_prose": [{
+        "ref": opening,
+        "reason": "Keep the original crossing detail available.",
+        "tags": ["river"]
+    }],
+    "tags": ["river"],
+    "max_bytes": 262144,
+    "max_items": 24
+})
+
+request = {
+    "schema_version": "writing-assistant-request/1",
+    "request_id": "journey-chapter-2-draft",
+    "project_id": "demo",
+    "kind": "writing", "phase": "draft",
+    "request": "Write the next chapter using the selected context.",
+    "materials": context["materials"]
+}
+prepared = tasks.prepare(
+    project, request, bindings=context["bindings"], ranges=context["ranges"],
+)
+```
+
+Inspect `selected` and `excluded` in `context["packet"]` before execution. `prepared` is a saved, unexecuted task; see [durable tasks](tasks.md#english) for execution and recovery. A [durable workflow](workflows.md#english) can also provide its saved chapter index directly.
+
+### How material is selected
+
+Priority is selected state, then newest explicitly indexed recent chapters, then earlier prose in input order. Only references in the request are considered. The application does not scan a library or discover an implicit latest chapter.
+
+| Request field | Purpose |
+| --- | --- |
+| `state` | `{ref, entry_ids?, tags?}` selects one exact current snapshot; omit it or use `null` for no state. |
+| `recent_chapters` | `{ref, chapter}` selects complete chapter originals; chapter numbers are unique, 1–20000. |
+| `earlier_prose` | `{ref, reason, tags?, span?}` selects earlier originals with a reason for each. |
+| `tags` | Matches declared earlier-prose tags, without semantic inference. |
+| `max_bytes` | Total material budget including the complete receipt JSON; default and maximum 262144 bytes. |
+| `max_items` | Material count including the receipt itself; default and maximum 24. |
+
+Original records must have kind `prose`, `draft`, or `fragment`, and all references belong to the same project. Each source list accepts up to 64 items, with at most 96 combined. Tagged earlier prose with no matching tag is excluded before metadata or body reads. Untagged earlier prose remains an explicit choice with its supplied reason.
+
+For an excerpt, add `span: {"start": START, "end": END, "sha256": DIGEST}` to an earlier-prose entry. This is a half-open original byte range with the selected slice's digest; boundaries must decode as complete UTF-8. The full original reference remains intact for version checks.
+
+### Inspect results and exclusions
+
+| Result field | How to use it |
+| --- | --- |
+| `reference` | Exact saved selection receipt for recovery and inspection. |
+| `packet.state` | Selected entries and their exact state reference. |
+| `packet.selected` | Original `ref`, `category`, `start`, `end`, selected `sha256`, and `reason`; recent chapters add `chapter`, tag matches add `matched_tags`. |
+| `packet.excluded` | Original reference, category, reason, and known byte count, without excluded prose. |
+| `material_bytes` | Exact total size of selected material. |
+| `materials`, `bindings`, `ranges` | Pass these together to `tasks.prepare` to retain exact originals and visible ranges. |
+
+Exclusion reasons are `budget`, `item-limit`, `unmatched-tags`, and `duplicate`. Lowest-priority prose is removed until the packet fits; budget-excluded bodies are not opened. State is never silently shortened. If the complete receipt cannot fit even without prose, `story_context_budget_exceeded` requires a smaller explicit state selection or a larger budget within the ceiling.
+
+The receipt is a `request-material`, counting toward bytes and one item; selected originals are `prior-prose`. A full original reference does not authorize a model to cite unseen bytes. Review evidence must use the same visible ranges. See [privacy](privacy.md#english) for what selected material can be sent to Codex.
+
+### Recover the exact selection
+
+`story_context.inspect(project, context["reference"])` rereads the saved selection. Callers with an existing `RecordStore` and live `Scope` can use `build_in_store`.
+
+| Situation | What to do |
+| --- | --- |
+| Same `context_id` and inputs | Revalidates state and originals, then returns the same exact receipt. |
+| `story_context_operation_conflict` | Inputs changed under an existing ID. Use a new context ID for a new selection. |
+| `stale_story_state` | Inspect current state and create a new explicit context operation and task. A saved task is never silently retargeted. |
+| Lost originals, invalid digests, or UTF-8 boundaries | Restore exact originals or correct the explicit range, then prepare again. Failure is not completed coverage. |
+
+Back up receipts, state, and originals together in the complete data directory while writes are stopped. Obtain a fresh scope after restoring to a new directory identity. See the [story-context schema](../schemas/story-context-v1.schema.json) for complete fields.

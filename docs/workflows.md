@@ -1,21 +1,21 @@
-# 章节 workflow
+# 章节 workflow / Chapter workflows
 
 [中文](#中文) · [English](#english)
 
 ## 中文
 
-Workflow 把一次获授权的目标转成有上限的章节 task 序列，保存阶段、准确输入、task 身份、checkpoint 和输出引用。Agent 调用 `workflow next` 准备下一项，再明确执行返回的 task；只有 `task execute` 调用模型。完成 workflow 不自动采用正文或建立 World 事实。
+Workflow 把一个创作目标变成有上限的章节 task 序列。应用保存阶段顺序、准确材料、task ID、checkpoint 和输出；Agent 调用 `next` 准备下一项，再明确执行返回的 task。你可以随时查看进度，生成内容保持未采用状态。
 
 ### 创建与推进
 
-在已初始化的项目中保存请求文件：
+在已初始化的 `demo` 项目旁保存 `workflow.json`：
 
 ```json
 {
   "schema_version": "writing-assistant-workflow-request/1",
   "workflow_id": "letter-story",
   "project_id": "demo",
-  "goal": "Write two short chapters about a courier returning an unsigned letter.",
+  "goal": "写两个短章节，讲述信使归还一封没有署名的信。",
   "chapters": 2
 }
 ```
@@ -28,51 +28,64 @@ writing-assistant task --project ../demo-project inspect TASK_ID
 writing-assistant task --project ../demo-project execute TASK_ID --expected-plan-sha256 TASK_PLAN_SHA256
 ```
 
-复制返回的 workflow/task ID 和 digest。完成 task 后再次调用 `next`，直到 `status: completed`。Create、inspect、next 不调用 provider，也不运行资格 probe。模型、effort、timeout、配置、策略和选择在 create 时冻结。
+将 `MODEL` 换成选定模型。从 workflow 返回值复制 `PLAN_SHA256`，从 `current_task` 复制 `TASK_ID` 和 `TASK_PLAN_SHA256`。完成 task 后再次调用 `workflow next`，重复查看、执行和推进，直到 `status: completed`。
 
-`lotus` 默认每章依次 `plan-scene`、`draft`、`reader-review`、`continuity-review`；`none` 从 draft 开始。可选 `policy` 明确选择 `concept`、`plan_scene`、`reader_review`、`continuity_review`、`revise`。Concept 只运行一次；显式 revise 每章最多一次，使用准确 draft 与选定反馈，没有循环打分放行。
+Create、inspect、next 不调用模型或 probe；只有 `task execute` 发送任务。模型、effort、timeout、配置、策略与材料选择在 create 时冻结。应用维护阶段和依赖，无须编写逐章请求文件或额外调度脚本。
 
-Reader/continuity review 分别使用新 task，不读取对方反馈。新 workflow 要求带准确 draft 与可见引用证据的 structured companion。应用验证字段和引文字节，不判断文学意见正确与否。缺少或格式错误的反馈不能满足依赖。
+### 选择阶段与上下文
 
-### 材料、目的与范围
+`lotus` 默认每章依次执行 `plan-scene`、`draft`、`reader-review`、`continuity-review`；`none` 从 `draft` 开始。可选 `policy` 键为 `concept`、`plan_scene`、`reader_review`、`continuity_review`、`revise`。Concept 在章节前运行一次；显式 revise 每章最多一次，没有反复改写打分的循环。
 
-请求 schema 为 [writing-workflow](../schemas/writing-workflow-v1.schema.json)。`chapters` 为 1–20，goal 最多 16384 UTF-8 bytes。`start_chapter` 默认 1，实际章节号及最后一章不超过 20000；章节 purpose 使用实际章节号。可通过 `bindings` 明确选择最多八个准确 Creative Records 版本。
+两种审读各用新 task，彼此不接收反馈。Reader review 接收准确 draft 与选定近期正文；continuity review 还可接收选定 seed material、构思或章节计划。新 workflow 的审读要求[带证据的结构化输出](review-decisions.md#中文)，应用核对准确 target 与可见引文。字段有效不代表文学意见正确；格式错误或缺失的反馈不能满足依赖。构思、计划和正文不会自动成为 World Sandbox 事实。
 
-`policy.recent_chapters` 为 0–4，默认 2。`limits` 只能降低 `max_material_bytes`、`max_prompt_bytes`、`max_output_bytes` 的默认 262144、524288、262144。超限停止准备，不删除必需材料来凑预算。
+| 选项 | 用途与范围 |
+| --- | --- |
+| `chapters` | 1–20 章；`goal` 最多 16384 UTF-8 bytes。 |
+| `start_chapter` | 默认 1；实际章节号及最后一章均不超过 20000。 |
+| `bindings` | 显式选择最多八个准确 Creative Records 版本。 |
+| `policy.recent_chapters` | 带入本 workflow 的近期已完成正文，0–4 章，默认 2。 |
+| `limits` | 只能降低 `max_material_bytes`、`max_prompt_bytes`、`max_output_bytes`，默认分别为 262144、524288、262144。 |
+| `techniques` | 准确版本、digest 与 technique ID；建议不会自动变成选择，空数组不加载技法。 |
 
-可选 `context` 指定准确 state、`earlier_prose`、tags、`max_bytes`、`max_items`。应用加入自己的已完成章节，再调用 [故事上下文](story-context.md) 选择器。Receipt 保留准确原件、选择原因和排除项；原文不被摘要替代，不扫描其他资料。片段引用只能使用模型实际看见的范围。
+例如接写第 11 章，设置 `start_chapter: 11`、`chapters: 1`，相关 purpose 条目的 `value.chapter` 也使用 `11`。已有章节通过显式 `context.earlier_prose` 进入，近期窗口来自本 workflow 已完成输出。
 
-`purpose: {aim, open_choices}` 默认来自目标；当前章节选定的 state purpose 优先。通过 `workflow update WORKFLOW_ID UPDATE_FILE --expected-plan-sha256 SHA --expected-checkpoint-sha256 SHA` 保存带 `reason` 的 purpose/context 修改。修改只影响后继准备；已准备的 task 保持原输入，并记录其准确 plan reference。
+可选 `context` 包含准确 `state`、`earlier_prose`、`tags`、`max_bytes`、`max_items`。应用的[Story context](story-context.md#中文)选择器保存原文引用、选择原因与排除项，不扫描资料库。片段引文只能落在模型实际看见的范围，offset 仍指向完整原文。超限停止准备，不静默删除必需材料。
 
-技法建议来自明确 phase/task/tags，不自动选择指导。准确 `techniques`（包括空数组）冻结到 workflow 和 task。原件 resolver 的 `--artifacts-root DIR --bindings FILE` 与请求中的 record bindings 独立，不授权目录扫描。
+`purpose: {aim, open_choices}` 默认来自目标，当前章节选定的 state purpose 优先。使用 `workflow update WORKFLOW_ID UPDATE_FILE --expected-plan-sha256 SHA --expected-checkpoint-sha256 SHA` 保存 `{reason, changes}`，`changes` 可包含 `purpose`、`context` 或两者。更新影响后续准备；已准备的 task 保持冻结输入，更新记录保留其 plan reference。
 
-### 审读意见与恢复
+外部原件需要在 create 与读取原件的 next 操作提供 `--artifacts-root DIR --bindings FILE`，与请求里的 record `bindings` 独立。执行 task 时也需相应 resolver，见[可恢复任务](tasks.md#中文)。
 
-`review_policy.material_action` 为 `advisory`（默认）、`hold` 或 `revise`。只有未解决的 `confirmed-contradiction` 且 `impact: material` 才触发；uncertainty/preference 保持 advisory。`max_revisions` 为 0 或 1，自动 revise 要求 1；没有适用意见时显式跳过该 revision slot。
+### 处理审读意见
 
-Hold 返回 `status: blocked`、`code: workflow_review_hold` 与准确 review reference。用 `workflow decide` 提供章节、准确 `review_decision`、意见 ID、`accepted/rejected/deferred`、reason，以及 `progression: apply-policy` 或已获授权的 `continue`。Continue 只针对被引用的 review，不取消其他 review 的 hold。接受反馈不等于采用正文；旧意见和已拒绝意见继续保留。
+`review_policy.material_action` 可为 `advisory`（默认）、`hold`、`revise`。只有未解决的 `confirmed-contradiction` 且 `impact: material` 才触发策略；不确定意见和措辞偏好仍为 advisory。`max_revisions` 为 0 或 1，`revise` 要求 1；没有适用意见时跳过该 revision slot。显式 `policy.revise` 独立选择一次返修。
 
-格式错误的完成 review 可用 `workflow repair-review`，提供 `reason` 与 structured `review_output`，并核对 plan/checkpoint digest。原始输出不删除；修复不调用模型，也不授权 redispatch。
+Hold 返回 `status: blocked`、`code: workflow_review_hold` 与准确 review reference。先查看意见，再用以下命令保存明确选择：
 
-结果为 `writing-assistant-workflow/1`，保留准确 plan/checkpoint、进度、`current_task`、输出与 actions，不含稿件正文。`model_calls: 0` 指当前 workflow 操作；task 自己保留执行历史，正文仍为 `adopted: false`。
+```sh
+writing-assistant workflow --project ../demo-project decide letter-story choices.json --expected-plan-sha256 PLAN_SHA256 --expected-checkpoint-sha256 CHECKPOINT_SHA256
+```
 
-Next 必须带 `--expected-plan-sha256`，可加 `--expected-checkpoint-sha256`。依赖要求 task、model、materialization 全部完成且准确输出完整；失败、损坏、stale、冲突或不确定结果不能推进。Inspect 后使用原 task 的保存证据 reconcile，不重发模型、不换 ID。
+`choices.json` 包含 `chapter`、准确 `review_decision` reference、`observations`（每项有 `observation_id`、`disposition: accepted/rejected/deferred`、`reason`），以及顶层 `reason` 和 `progression: apply-policy/continue`。`continue` 需要你明确选择，只作用于该 review；其他 review 的 hold 继续有效。保存选择不会取消或改写已准备 task，也不等于采用正文。
 
-`--max-bytes` 为 1024–4194304，默认 32768，包含 JSON 末尾换行。输出列表过大可返回 compact view 与 `details.outputs_checkpoint`，不截断已存输出。Blocked next 同时返回 stdout 状态、stderr 安全错误和 exit `2`。Mutation 的 `output_contract_violation` 表示 effects 可能已保存，先查看原 workflow。历史计划仍可读；应用源码或配置变化可拒绝继续推进。
+格式错误的完成 review 可用 `workflow repair-review WORKFLOW_ID REPAIR_FILE --expected-plan-sha256 SHA --expected-checkpoint-sha256 SHA`。文件包含 `{reason, review_output}`，校正仍按原 target 与可见证据验证。原输出与校正均保留，不调用模型。缺乏依据的意见需明确决定，不能仅因格式错误重新派发。
+
+### 状态与恢复
+
+结果 `writing-assistant-workflow/1` 包含准确 plan/checkpoint reference 与 digest、进度、`current_task`、输出引用和 `actions`，不含稿件正文。`model_calls: 0` 描述本次 workflow 命令；task 自己保留调用历史。
+
+Next 要求 `--expected-plan-sha256`；加上 `--expected-checkpoint-sha256` 可要求状态仍与刚查看的一致。发生并发冲突或 stale 错误后重新 inspect，沿用原 workflow/task ID。
+
+依赖要求 task、model 和 materialization 全部完成，且输出完整。失败、不确定、冲突、损坏或过时 task 都会停止推进。先 `task inspect`，需要时用保存证据 `task reconcile`；next 不重试模型或创建替代 attempt。
+
+`--max-bytes` 默认为 32768，范围 1024–4194304，包含 JSON 末尾换行。输出列表较大时返回 compact view 与 `details.outputs_checkpoint`，完整输出仍可按该 reference 读取。Blocked next 使用 exit `2`，stdout 留状态、stderr 留安全错误；inspect 可以成功返回 blocked。Mutation 的 `output_contract_violation` 可能已有本地保存效果，先查看原 workflow。旧计划仍可查看，应用源码或配置变化可能拒绝继续推进。
 
 ## English
 
-A workflow turns one authorized goal into a bounded sequence of chapter tasks.
-The application stores the phase order, exact selected inputs, task identities,
-checkpoint and output references. `workflow next` observes the current result
-and prepares the next durable task. The Agent inspects and explicitly executes
-that task, then calls `next` again. No per-chapter prompt files or custom
-orchestration script are required.
+A workflow turns one creative goal into a bounded sequence of chapter tasks. The application stores phase order, exact material, task IDs, checkpoints and outputs. The Agent calls `next` to prepare the next task, then explicitly executes it. Progress remains inspectable and generated content stays unadopted.
 
 ### Create once, then advance explicitly
 
-For a project initialized with the `lotus` writing mode, save a synthetic
-`workflow.json`:
+Save `workflow.json` beside an initialized `demo` project:
 
 ```json
 {
@@ -90,159 +103,55 @@ writing-assistant workflow --project ../demo-project inspect letter-story
 writing-assistant workflow --project ../demo-project next letter-story --expected-plan-sha256 PLAN_SHA256
 writing-assistant task --project ../demo-project inspect TASK_ID
 writing-assistant task --project ../demo-project execute TASK_ID --expected-plan-sha256 TASK_PLAN_SHA256
-writing-assistant workflow --project ../demo-project next letter-story --expected-plan-sha256 PLAN_SHA256
 ```
 
-Copy `PLAN_SHA256` from the workflow and `TASK_ID` and `TASK_PLAN_SHA256` from
-its `current_task`. Replace `MODEL` with the user's selected Codex model. Repeat
-the task inspection/execution and `next` calls until `status` is `completed`.
-Only `task execute` calls the model. `create`, `inspect` and `next` make no
-provider call or capability probe. Model, reasoning effort, local timeout,
-configuration, policy and selections are frozen when creating the workflow.
+Replace `MODEL` with the selected model. Copy `PLAN_SHA256` from the workflow response and `TASK_ID`/`TASK_PLAN_SHA256` from `current_task`. After completing the task, call `workflow next` again. Repeat inspection, execution and advancement until `status: completed`.
 
-The default sequence is `plan-scene`, `draft`, `reader-review`,
-`continuity-review` for each chapter in `lotus` mode. In `none` mode the default
-starts at `draft`, with both review stages. Optional `policy` keys choose
-`concept`, `plan_scene`, `reader_review`, `continuity_review` and `revise`.
-`concept` runs once before chapter tasks; `revise` adds at most one revision per
-chapter using the exact draft and selected review feedback. A review is a fresh
-task context. There is no automatic revision loop or numerical literary pass
-gate. Guidance and feedback do not establish prose quality or user acceptance.
-Reader review receives the exact draft and selected recent prose. Continuity
-review also receives explicitly selected seed material and the workflow's concept
-or chapter plan when present. Plans and generated details stay candidates; these
-inputs do not establish World Sandbox facts. Neither review sees the other's
-feedback. New workflows require a structured evidence companion for each review.
-The application validates exact targets and visible evidence spans while retaining
-the original output. These checks do not decide whether the review is correct.
-Missing or malformed feedback cannot satisfy a dependency.
-
-`review_policy.material_action` selects `advisory` (default), `hold`, or `revise`.
-Only unresolved `confirmed-contradiction` observations with `impact: material`
-trigger this policy. Uncertainty and wording preferences remain advisory.
-`review_policy.max_revisions` is zero or one; `revise` requires one and reserves
-at most one revision per chapter. When no applicable concern exists, that slot
-is explicitly skipped. The legacy explicit `policy.revise` selects one requested
-revision independently of automatic feedback branching.
-
-A material hold returns `status: blocked`, `code: workflow_review_hold` and exact
-review decision references. `workflow next` preserves the hold. Save explicit
-choices with `workflow decide WORKFLOW_ID CHOICES_FILE --expected-plan-sha256 SHA
---expected-checkpoint-sha256 SHA`. A choice file contains `chapter`, an exact
-`review_decision` reference, `observations` with `observation_id`, `disposition`
-(`accepted`, `rejected`, `deferred`) and `reason`, plus a top-level `reason` and
-`progression` (`apply-policy` or an explicitly authorized `continue`). Originals,
-rejected feedback and user-directed continuation remain in immutable records.
-`continue` applies only to the referenced review decision; another review's
-material concerns retain their configured policy. Choices saved after a task is
-prepared affect successor preparation and record that frozen task reference;
-they do not cancel or alter the prepared task. Execute a prepared task only
-within the user's current authorization.
-See [review decisions](review-decisions.md) for the structured output contract.
+Create, inspect and next make no model call or probe; only `task execute` sends a task. Creation freezes model, effort, timeout, configuration, policy and material selections. The application maintains phases and dependencies without per-chapter request files or an extra orchestration script.
 
 ### Inputs and dependencies
 
-The [workflow request schema](../schemas/writing-workflow-v1.schema.json) is
-discoverable through `capabilities --schema writing-workflow`. A workflow has
-one to twenty chapters and a nonempty goal of at most 16384 UTF-8 bytes.
-`start_chapter` defaults to one and identifies the first actual chapter number,
-up to 20000; the last selected chapter must also remain within that bound. For a
-one-chapter continuation at chapter eleven, use `start_chapter: 11`, `chapters: 1`
-and a selected purpose entry with `value.chapter: 11`. Saved steps, outputs and
-purpose matching use actual chapter numbers; the prompt also identifies the
-position within this workflow. Existing earlier chapters enter through explicit
-`context.earlier_prose`, while recent context comes from this workflow's outputs.
-Optional `bindings` select up to eight exact Creative Records versions using
-`[{"uri":"selected:idea","ref":RETURNED_RECORD_REFERENCE}]`. Copy a complete
-returned reference; this shorthand is not executable JSON. The application uses
-only those authorized inputs and the workflow's own completed outputs.
+The default `lotus` sequence per chapter is `plan-scene`, `draft`, `reader-review`, `continuity-review`; `none` starts at `draft`. Optional `policy` keys are `concept`, `plan_scene`, `reader_review`, `continuity_review`, `revise`. Concept runs once before chapters; an explicit revision adds at most one revision per chapter, without a repeated scoring loop.
 
-The workflow builds the next task's bounded context from the selected initial
-material, current chapter results and recent completed chapter text.
-`policy.recent_chapters` controls this recent context window from zero to four
-chapters, default two. Optional `limits` lower `max_material_bytes`,
-`max_prompt_bytes` and `max_output_bytes` from defaults 262144, 524288 and 262144.
-Oversized context stops preparation instead of silently removing required
-material. Technique selection uses the same exact version, digest and explicit
-IDs as an individual [writing task](techniques.md).
+Reviews use separate fresh tasks and do not receive each other's feedback. Reader review receives the exact draft and selected recent prose. Continuity review may also receive selected seed material, concept or chapter plan. New workflows require [structured review evidence](review-decisions.md#english); the application checks exact targets and visible quotes. Valid fields do not establish literary correctness. Missing or malformed feedback cannot satisfy dependencies. Concepts, plans and prose do not automatically become World Sandbox facts.
 
-Optional `context` combines an exact `state` selection, an explicit
-`earlier_prose` index, `tags`, `max_bytes` and `max_items`. The application adds
-its own recent completed chapters and calls the bounded context selector. Each
-prepared task exposes the exact context receipt; that receipt lists selected
-originals, reasons and budget/relevance exclusions. Earlier prose can use exact
-UTF-8 byte ranges. Review quotes resolve only inside the displayed slice and
-retain offsets into the complete original. No prose summary replaces originals,
-and no library scan is performed. See [story context](story-context.md).
+| Option | Purpose and range |
+| --- | --- |
+| `chapters` | 1–20 chapters; `goal` is at most 16384 UTF-8 bytes. |
+| `start_chapter` | Defaults to 1; actual chapter numbers, including the last, must stay within 20000. |
+| `bindings` | Explicitly selects up to eight exact Creative Records versions. |
+| `policy.recent_chapters` | Includes this workflow's recent completed prose: 0–4 chapters, default 2. |
+| `limits` | Can only lower `max_material_bytes`, `max_prompt_bytes`, `max_output_bytes`, whose defaults are 262144, 524288, 262144. |
+| `techniques` | Exact versions, digests and technique IDs; suggestions select nothing automatically and an empty array loads none. |
 
-`story-state create`, `revise` and `inspect` persist typed knowledge, location,
-time, resource, relationship, open-question and purpose entries. Generated
-entries stay proposals; user-established constraints and adopted facts require
-explicit authorization. Changes use an exact prior reference. This local state
-does not mutate World Sandbox facts. See [story state](story-state.md).
+For a continuation at chapter 11, use `start_chapter: 11`, `chapters: 1` and `value.chapter: 11` in a relevant purpose entry. Earlier chapters enter through explicit `context.earlier_prose`; the recent window uses this workflow's completed outputs.
 
-The workflow saves `purpose: {aim, open_choices}`; omission starts from the
-authorized goal. A selected state purpose entry for the current chapter takes
-precedence. `workflow update WORKFLOW_ID UPDATE_FILE --expected-plan-sha256 SHA
---expected-checkpoint-sha256 SHA` saves `{reason, changes}` where `changes`
-contains `purpose`, `context`, or both. Updates affect successor tasks. Any
-already prepared task keeps its frozen inputs, and the update records its exact
-plan reference. Purpose changes never prescribe an ending.
+Optional `context` contains exact `state`, `earlier_prose`, `tags`, `max_bytes` and `max_items`. The [story context](story-context.md#english) selector retains original references, selection reasons and exclusions without scanning a library. Quotes must fall within text shown to the model, retaining offsets into the complete original. Oversized context stops preparation instead of silently removing required material.
 
-Workflow creation exposes bounded technique suggestions derived from declared
-phase/task and explicitly selected state/context tags. Suggestions apply no
-technique. The accepted exact `techniques` selection, including an empty array,
-is frozen in the workflow and every prepared task.
+`purpose: {aim, open_choices}` defaults from the goal; a selected state purpose for the current chapter takes precedence. Save `{reason, changes}` with `workflow update WORKFLOW_ID UPDATE_FILE --expected-plan-sha256 SHA --expected-checkpoint-sha256 SHA`; `changes` may contain `purpose`, `context` or both. Updates affect future preparation. Prepared tasks keep frozen input and their plan reference is retained in the update record.
 
-Reference-backed originals require `--artifacts-root DIR --bindings FILE` at
-workflow creation and when `next` needs those originals. These flags describe
-explicit producer bindings; they are separate from the workflow request's
-record-version `bindings`. They never authorize a directory scan. Execute or
-reconcile a returned task with any required artifact resolver flags as described
-in [durable tasks](tasks.md).
+External originals require `--artifacts-root DIR --bindings FILE` at create and when next reads them, separately from record `bindings` inside the request. Task execution also needs the relevant resolver; see [durable tasks](tasks.md#english). Complete fields are in the [workflow request schema](../schemas/writing-workflow-v1.schema.json).
+
+### Handle review feedback
+
+`review_policy.material_action` is `advisory` (default), `hold` or `revise`. Only unresolved `confirmed-contradiction` observations with `impact: material` trigger it; uncertainty and wording preferences remain advisory. `max_revisions` is 0 or 1, and `revise` requires 1. An unused revision slot is skipped when no concern applies. Explicit `policy.revise` independently selects one revision.
+
+A hold returns `status: blocked`, `code: workflow_review_hold` and exact review references. Inspect the feedback, then save explicit choices:
+
+```sh
+writing-assistant workflow --project ../demo-project decide letter-story choices.json --expected-plan-sha256 PLAN_SHA256 --expected-checkpoint-sha256 CHECKPOINT_SHA256
+```
+
+`choices.json` contains `chapter`, an exact `review_decision` reference, `observations` (each with `observation_id`, `disposition: accepted/rejected/deferred` and `reason`), plus top-level `reason` and `progression: apply-policy/continue`. `continue` requires your explicit choice and applies only to that review; another review's hold remains effective. Choices do not cancel or rewrite a prepared task or adopt prose.
+
+For a completed review with malformed structured output, use `workflow repair-review WORKFLOW_ID REPAIR_FILE --expected-plan-sha256 SHA --expected-checkpoint-sha256 SHA`. The file contains `{reason, review_output}`; corrections are validated against the same target and visible evidence. Both original and correction are retained, without a model call. Unsupported claims need an explicit decision; a formatting failure does not justify redispatch.
 
 ### Inspect and recover
 
-Results use `writing-assistant-workflow/1`. They include the frozen `plan`
-reference/digest, exact `checkpoint` reference/digest, progress, `current_task`,
-exact output references and available `actions`. They contain no manuscript
-bodies. `model_calls: 0` and `dispatch_attempts: 0` describe the workflow command
-invocation; tasks retain their own execution history. Generated text stays
-`adopted: false`.
+The `writing-assistant-workflow/1` result contains exact plan/checkpoint references and digests, progress, `current_task`, output references and `actions`, without manuscript bodies. `model_calls: 0` describes that workflow command; tasks retain their own call history.
 
-`inspect` is read-only. `next` may save a checkpoint and prepare a task, and is
-safe to resume using the same workflow ID. It requires `--expected-plan-sha256`;
-add `--expected-checkpoint-sha256 CHECKPOINT_SHA256` to require the checkpoint
-just inspected. Inspect after a concurrency or stale-input error and preserve
-the existing workflow and task identities.
+Next requires `--expected-plan-sha256`. Add `--expected-checkpoint-sha256` to require the state just inspected. Inspect again after a concurrency or stale-input error, keeping the original workflow/task IDs.
 
-A dependency is satisfied only by a completed task with completed model and
-local materialization states and verified exact output. Failed, uncertain,
-blocked, corrupt, stale or conflicting work cannot advance the workflow. Read
-the returned current task with `task inspect`; when applicable, use its saved
-evidence with `task reconcile`. `next` never retries the model, creates a
-replacement attempt, adopts text or converts generated proposals into World
-Sandbox facts. An unresolved failure remains blocked for the Agent to report.
+Dependencies require completed task, model and materialization states plus complete output. Failed, uncertain, conflicting, corrupt or stale tasks stop progression. Use `task inspect`, then `task reconcile` where saved evidence supports recovery. Next never retries a model or creates a replacement attempt.
 
-Both inspection and advancement bound complete UTF-8 JSON including newline
-with `--max-bytes`, from 1024 to 4194304 bytes, default 32768. A large output list
-returns `view: compact`, `omitted_fields: ["outputs"]` and an exact checkpoint
-reference in `details.outputs_checkpoint`; it does not truncate saved outputs.
-Read that checkpoint through the exact record operation when needed.
-A blocked `next` returns its status view on stdout plus exit code `2` and a
-payload-free JSON error on stderr. `inspect` can succeed while reporting a blocked
-state. Preserve a failing result and stderr before correcting
-inputs. On `output_contract_violation`, a mutating command reports
-`effect_status: unknown`; inspect the existing workflow because a plan,
-checkpoint or task may already have been saved. Creating a workflow does not
-authorize model execution or publication. The user retains adoption decisions.
-
-For a completed review whose structured output is missing or malformed, preserve
-its original content reference. `workflow repair-review WORKFLOW_ID REPAIR_FILE
---expected-plan-sha256 SHA --expected-checkpoint-sha256 SHA` accepts
-`{reason, review_output}` and validates the supplied structured correction
-against the same exact target and selected evidence. It records the original
-reference and correction before `next` consumes it. This operation makes no
-model call. Unsupported review claims require an explicit decision; formatting
-failure alone never authorizes redispatch. Historical plans remain inspectable;
-changed application source or configuration refuses further progression.
+`--max-bytes` defaults to 32768, accepts 1024–4194304 and includes the JSON newline. A large output list returns a compact view with `details.outputs_checkpoint`; complete outputs remain readable through that reference. Blocked next uses exit `2`, status on stdout and a safe error on stderr. Inspection can succeed while reporting blocked. Mutating `output_contract_violation` can follow saved effects; inspect the original workflow first. Historical plans remain inspectable, although changed source or configuration may prevent further progression.

@@ -1,18 +1,27 @@
 name: 缺陷报告 / Bug report
-description: 使用合成输入报告问题 / Report a problem using synthetic inputs
+description: 说明遇到的问题和复现方式 / Describe a problem and how to reproduce it
 body:
   - type: markdown
     attributes:
-      value: "仅使用合成材料，不附稿件、凭据或私人日志。 / Use synthetic material only. Do not include manuscripts, credentials or private logs."
+      value: "此页面公开可见。请用虚构文本复现，不要附上真实稿件、凭据或私人日志。 / This page is public. Use fictional text and leave out manuscripts, credentials and private logs."
   - type: input
     id: version
     attributes:
       label: 版本与环境 / Version and environment
+      description: "应用版本、macOS 版本、Python 版本；AI 任务请加上 Codex CLI 版本。 / Application, macOS and Python versions; include the Codex CLI version for AI tasks."
     validations:
       required: true
   - type: textarea
     id: reproduction
     attributes:
-      label: 合成复现、预期与实际行为 / Synthetic reproduction, expected and actual behavior
+      label: 复现步骤 / Steps to reproduce
+      description: "提供相关命令和最小虚构输入。 / Include the relevant commands and minimal fictional input."
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 预期与实际结果 / Expected and actual result
+      description: "可附已检查并移除私人信息的错误代码。 / Include error codes after checking for and removing private information."
     validations:
       required: true

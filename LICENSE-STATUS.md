@@ -1,19 +1,15 @@
-# 许可状态 / License status
+# 许可说明 / Licensing
 
 [中文](#中文) · [English](#english)
 
 ## 中文
 
-写作助手采用 [Apache-2.0](LICENSE)，Copyright 2026 Bean2B，随附未经修改的标准许可正文。
+Writing Assistant 采用 [Apache License 2.0](LICENSE)。Copyright 2026 Bean2B。完整许可证随源码和安装包提供。
 
-软件许可证不授予本项目或开发者使用你的输入、创作内容、生成结果或本地记录的权利。
-外部工具保留各自条款，见[第三方声明](THIRD_PARTY_NOTICES.md)。
+许可证适用于本项目的软件，不将你的输入、稿件、生成结果或本地记录许可给项目或开发者。外部工具及 AI 服务适用各自的许可证和条款，见[第三方声明](THIRD_PARTY_NOTICES.md)。
 
 ## English
 
-Writing Assistant is licensed under [Apache-2.0](LICENSE).
-Copyright 2026 Bean2B. The standard license text is included unchanged.
+Writing Assistant is licensed under the [Apache License 2.0](LICENSE). Copyright 2026 Bean2B. The full license is included with the source and packages.
 
-The software license does not grant the project or its developers rights to your
-inputs, writing, generated results, or local records. External tools retain their
-own terms; see [third-party notices](THIRD_PARTY_NOTICES.md).
+This license covers the project's software. It does not license your inputs, manuscripts, generated results or local records to the project or its developers. External tools and AI services retain their own licenses and terms; see [Third-party notices](THIRD_PARTY_NOTICES.md#english).

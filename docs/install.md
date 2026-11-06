@@ -1,157 +1,179 @@
-# 安装指南 / Installation
+# 安装 / Installation
 
 [中文](#中文) · [English](#english)
 
 ## 中文
 
-本页对应 **Writing Assistant v0.1.1**，提供 Codex 代为安装和用户自主安装两条路径。应用的命令名是 `writing-assistant`。安装与初始化不调用写作模型，也不自动采用创作内容。
+本页安装 **Writing Assistant v0.1.1**，并建立一个可以开始使用的本地项目。
 
-### 交给 Codex 安装
+### 运行要求
 
-使用者可以把 [v0.1.1 release](https://github.com/Bean2B/writing-assistant/releases/tag/v0.1.1) 页面交给 Codex，并要求安装。Codex 应读取本页和 [Agent 接入说明](agent-usage.md)，按以下步骤完成这次安装任务：
+| 项目 | 要求 |
+| --- | --- |
+| 操作系统 | Apple Silicon macOS |
+| Python | Python 3.12，包含 `venv` 和 `pip` |
+| AI 写作 | 另行安装并登录受支持的 Codex CLI；[查看具体版本](codex-support.md) |
 
-1. 检查当前执行环境是否为 Apple Silicon macOS，以及可用的 Python 是否为 3.12。检查既有 `writing-assistant`、目标安装目录、项目配置与数据目录；已存在时先读取版本和配置，保留已有数据。只在需要选择新的工作区或数据位置、且无法从当前任务判断时询问使用者。
-2. 使用下面的固定版本下载地址取得 wheel 和 `SHA256SUMS`，核对 wheel 的 SHA-256 后再安装。校验失败即停止，保留失败文件和错误；不改用其他版本或来源。
-3. 在当前写作工作区的独立 virtual environment 中安装 wheel，使用 `--no-index --no-deps`。下方命令提供默认目录；使用者已指定路径时遵循其选择。不要把创作数据放进安装目录。
-4. 运行 `writing-assistant --version` 和 `capabilities`。运行 `doctor` 检查既有 Codex CLI 的本地资格，按 [Codex 支持](codex-support.md) 解释结果。应用不附带 Python、Codex 或登录凭据。缺少 Python、受支持的 Codex CLI 或登录时，完成仍可执行的安装工作，明确指出尚缺条件；不要声称 AI 已可用，也不要为安装改写全局 Codex 配置、登录资料或调用方 Agent 的设置。
-5. 初始化使用者指定的项目和独立数据目录；未指定时可在当前工作区使用下方的 `writing-project`、`writing-data` 与 `my-writing`。若这些路径已有项目或数据，先读取配置并复用匹配项目，避免覆盖或重新初始化。读回 `config` 和项目 `capabilities`。
-6. 返回应用版本、准确 CLI 路径、项目目录、数据目录、已完成检查及任何未满足的 Codex 条件。保留这组路径供后续使用，并读取 [Agent 接入说明](agent-usage.md) 了解记录、task、workflow 和恢复。安装任务本身不发起 AI 写作；只有使用者另有写作授权时才准备和执行对应任务。
+应用本身没有第三方 Python runtime 依赖。安装和本地记录操作不调用模型；AI 任务才通过 Codex 使用网络服务。
 
-`doctor` 不调用模型。它的 `runtime_readiness: not_checked` 表示未验证实际 AI 请求；`live_supported` 只说明本地资格。安装完成、项目初始化和实际 AI 生成是不同的结果，应分别报告。
+### 推荐：交给 Codex 安装
 
-### 自主安装：下载、校验并安装
+将本页链接交给 Codex，并告诉它项目和数据应放在哪里。Agent 应检查已有安装和项目，按下方步骤校验并安装，然后返回应用路径、项目路径、数据路径，以及尚未满足的 Codex 条件。已有项目保留并复用，不重复初始化。
 
-先准备带 `venv` 和 `pip` 的 Python 3.12。以下命令适用于 Apple Silicon macOS，在你选择的写作工作区执行。整个命令块在 subshell 内运行，任一步失败即停止；它不会覆盖已有的同版本安装目录。需要更新或复用安装时，先核对现有版本和路径。
+### 自行安装
+
+**1. 在单独的目录中下载、校验和安装。** 先进入你选定的写作工作目录，例如新建的 `writing-workspace`。下方命令要求该目录中还没有 `.venv`；中途失败会停止安装。
 
 ```sh
 (
   set -eu
-  python3.12 - <<'PY'
-import platform
-import sys
-if platform.system() != "Darwin" or platform.machine() != "arm64" or sys.version_info[:2] != (3, 12):
-    raise SystemExit("Requires Apple Silicon macOS and Python 3.12")
-print("Platform and Python version are supported")
-PY
-
-  WA_ROOT="$PWD/.writing-assistant"
-  WA_DOWNLOADS="$WA_ROOT/downloads/0.1.1"
-  WA_ENV="$WA_ROOT/venvs/0.1.1"
-  if [ -e "$WA_ENV" ]; then
-    printf '%s\n' 'Installation directory exists; inspect it before reuse.' >&2
-    exit 1
-  fi
-  mkdir -p "$WA_DOWNLOADS"
-  curl -fL 'https://github.com/Bean2B/writing-assistant/releases/download/v0.1.1/writing_assistant-0.1.1-py3-none-any.whl' -o "$WA_DOWNLOADS/writing_assistant-0.1.1-py3-none-any.whl"
-  curl -fL 'https://github.com/Bean2B/writing-assistant/releases/download/v0.1.1/SHA256SUMS' -o "$WA_DOWNLOADS/SHA256SUMS"
-  python3.12 - "$WA_DOWNLOADS" <<'PY'
+  test ! -e .venv || { printf '%s\n' 'An installation already exists at .venv; inspect it before continuing.' >&2; exit 1; }
+  mkdir -p downloads
+  curl -fL https://github.com/Bean2B/writing-assistant/releases/download/v0.1.1/writing_assistant-0.1.1-py3-none-any.whl -o downloads/writing_assistant-0.1.1-py3-none-any.whl
+  curl -fL https://github.com/Bean2B/writing-assistant/releases/download/v0.1.1/SHA256SUMS -o downloads/SHA256SUMS
+  python3.12 - <<'VERIFY'
 from pathlib import Path
 import hashlib
-import sys
-directory = Path(sys.argv[1])
-wheel = directory / "writing_assistant-0.1.1-py3-none-any.whl"
-entries = [line.split() for line in (directory / "SHA256SUMS").read_text().splitlines() if line.strip()]
-matches = [entry[0] for entry in entries if len(entry) == 2 and entry[1] == wheel.name]
-actual = hashlib.sha256(wheel.read_bytes()).hexdigest()
-if len(matches) != 1 or actual != matches[0]:
-    raise SystemExit("Wheel SHA-256 verification failed; installation stopped")
-print("Wheel SHA-256 verified")
-PY
-  python3.12 -m venv "$WA_ENV"
-  "$WA_ENV/bin/python" -m pip install --no-index --no-deps "$WA_DOWNLOADS/writing_assistant-0.1.1-py3-none-any.whl"
-  "$WA_ENV/bin/writing-assistant" --version
-  "$WA_ENV/bin/writing-assistant" capabilities
+wheel = Path("downloads/writing_assistant-0.1.1-py3-none-any.whl")
+entries = [line.split() for line in Path("downloads/SHA256SUMS").read_text().splitlines()]
+expected = [entry[0] for entry in entries if len(entry) == 2 and entry[1] == wheel.name]
+if len(expected) != 1 or hashlib.sha256(wheel.read_bytes()).hexdigest() != expected[0]:
+    raise SystemExit("SHA-256 verification failed; installation stopped")
+print("SHA-256 verified")
+VERIFY
+  python3.12 -m venv .venv
+  .venv/bin/python -m pip install --no-index --no-deps downloads/writing_assistant-0.1.1-py3-none-any.whl
+  .venv/bin/writing-assistant --version
 )
 ```
 
-在同一工作区检查 Codex 接入并初始化新的项目：
+**2. 初始化新项目。** 仍在同一目录执行：
 
 ```sh
-./.writing-assistant/venvs/0.1.1/bin/writing-assistant doctor
-./.writing-assistant/venvs/0.1.1/bin/writing-assistant init --project ./writing-project --data-dir ./writing-data --project-id my-writing
-./.writing-assistant/venvs/0.1.1/bin/writing-assistant config --project ./writing-project
-./.writing-assistant/venvs/0.1.1/bin/writing-assistant capabilities --project ./writing-project
+source .venv/bin/activate
+writing-assistant init --project ../demo-project --data-dir ../demo-data --project-id demo
+writing-assistant config --project ../demo-project
+writing-assistant capabilities --project ../demo-project
 ```
 
-逐条执行并查看结果。`doctor` 不通过时，本地记录功能仍可使用；AI 任务要先满足 [Codex 支持](codex-support.md) 的要求。已有项目应直接读取配置，不重复 `init`。默认初始化选择 `lotus` 写作模式并启用 World Sandbox；它们是应用内部的可选写作能力，调用入口仍是 `writing-assistant`。需要 Direct Mode 时，在新项目的 `init` 命令中明确加入 `--writing-mode none --world-sandbox off`。
+`demo-project` 保存配置，`demo-data` 保存稿件和运行记录；两者都在安装目录之外。示例 ID `demo` 与随源码提供的示例请求一致。可以选择其他路径和 ID，后续请求需使用对应值。已有项目只需查询 `config`，不要重复执行 `init`。
 
-安装文件位于 `.writing-assistant/venvs/0.1.1`，下载文件位于 `.writing-assistant/downloads/0.1.1`；创作项目位于 `writing-project`，原文与记录位于 `writing-data`。移动、删除或替换安装环境前备份创作数据目录；软件安装不迁移或删除已有创作内容。保留实际选择的路径。
+**3. 检查 AI 接入。**
 
-如何从源码构建见 [README](../README.md#中文)。开始记录和使用 AI 任务见 [Agent 接入说明](agent-usage.md)、[记录](records.md)与 [task](tasks.md)。AI 任务需要另行安装并登录受支持的 Codex CLI；凭据由 Codex 自身管理，不填写到 Writing Assistant 的项目配置或公开反馈中。
+```sh
+writing-assistant doctor
+```
+
+`doctor` 不调用模型。`live_supported: true` 表示本机 CLI 符合接入要求，`runtime_readiness: not_checked` 表示没有发送真实 AI 请求。检查未通过时，本地记录仍可使用；按 [Codex 支持](codex-support.md)处理缺失条件。
+
+安装完成后，从[保存一条灵感](records.md)或 [Agent 接入](agent-usage.md)开始。新终端中需再次激活 `.venv`，也可以使用安装时得到的 CLI 完整路径。
+
+### 从源码使用
+
+在本 repo 的源码目录中，可以直接运行：
+
+```sh
+PYTHONPATH=src python3.12 -B -m writing_assistant capabilities
+```
+
+需要构建本地 wheel 时，在没有既有 `.venv` 的源码目录执行：
+
+```sh
+python3.12 -m venv .venv
+.venv/bin/python -m pip wheel --no-index --no-deps --no-build-isolation . -w dist
+.venv/bin/python -m pip install --no-index --no-deps dist/writing_assistant-0.1.1-py3-none-any.whl
+```
+
+上手文档中的 `writing-assistant` 可以替换为 `.venv/bin/writing-assistant`。源码方式使用 repo 内的 `examples/synthetic/`；从 wheel 安装后，可按[请求格式](interface.md)创建自己的请求文件。
+
+### 更新与备份
+
+已有安装请先阅读[下载与升级](release.md)。替换软件前，停止写入并备份项目配置与完整数据目录。不要把创作数据放进安装环境，也不要在项目配置中填写 Codex 登录凭据。
 
 ## English
 
-This guide is for **Writing Assistant v0.1.1**. You may ask Codex to install it or install it yourself. The executable is `writing-assistant`. Installation and initialization do not call a writing model or adopt creative content.
+Install **Writing Assistant v0.1.1** and create a local project ready for use.
 
-### Installation by Codex
+### Requirements
 
-Give Codex the [v0.1.1 release](https://github.com/Bean2B/writing-assistant/releases/tag/v0.1.1) page and request installation. Codex should read this guide and [Agent usage](agent-usage.md#english), then complete the following installation task:
+| Component | Requirement |
+| --- | --- |
+| Operating system | Apple Silicon macOS |
+| Python | Python 3.12 with `venv` and `pip` |
+| AI writing | A separately installed, signed-in, supported Codex CLI; [accepted versions](codex-support.md#english) |
 
-1. Check for Apple Silicon macOS and Python 3.12. Inspect any existing `writing-assistant`, installation directory, project configuration and data directory. Read the current version and configuration before reusing them; preserve existing data. Ask about workspace or data location only when the current task does not resolve a necessary choice.
-2. Download the wheel and `SHA256SUMS` from the fixed version URLs below. Verify the wheel SHA-256 before installation. On a mismatch, stop and retain the failed files and error; do not substitute another version or source.
-3. Install the wheel in a separate virtual environment under the writing workspace, using `--no-index --no-deps`. Use the default paths below unless the user has specified others. Keep creative data outside the installation directory.
-4. Run `writing-assistant --version` and `capabilities`. Use `doctor` to check the existing Codex CLI's local qualification, and interpret it according to [Codex support](codex-support.md#english). Python, Codex and credentials are not bundled. If Python, a supported Codex CLI or sign-in is missing, finish the installation work that remains possible and report the missing conditions. Do not claim AI readiness or rewrite global Codex configuration, sign-in data or the calling Agent's settings as part of installation.
-5. Initialize the user's chosen project and separate data directory. Without a specified location, use `writing-project`, `writing-data` and `my-writing` in the current workspace as shown below. If project or data paths already exist, inspect configuration and reuse a matching project instead of overwriting or reinitializing it. Read back `config` and project `capabilities`.
-6. Return the application version, exact executable path, project and data directories, completed checks and any unmet Codex conditions. Retain the selected paths for subsequent work and read [Agent usage](agent-usage.md#english) for records, tasks, workflows and recovery. Installation alone does not request AI writing; prepare and execute a writing task only when the user has authorized that work.
+The application has no third-party Python runtime dependencies. Installation and local record operations do not call a model. AI tasks use Codex's network service.
 
-`doctor` does not call a model. `runtime_readiness: not_checked` means no actual AI request was verified; `live_supported` reports local qualification only. Report application installation, project initialization and actual AI generation as separate outcomes.
+### Recommended: ask Codex to install
 
-### Manual download, verification and installation
+Give Codex this page and tell it where to keep the project and data. The Agent should inspect existing installations and projects, verify and install the package using the steps below, then report the executable, project and data paths plus any unmet Codex requirements. Preserve and reuse an existing project instead of initializing it again.
 
-Prepare Python 3.12 with `venv` and `pip`. Run the following commands from your chosen writing workspace on Apple Silicon macOS. The block runs in a subshell and stops at the first failure. It refuses to overwrite an existing installation directory for this version; inspect an existing version and its paths before reuse or replacement.
+### Manual installation
+
+**1. Download, verify and install in a separate directory.** Start in your chosen writing workspace, such as a new `writing-workspace` directory. The following block requires that `.venv` does not exist there and stops on failure.
 
 ```sh
 (
   set -eu
-  python3.12 - <<'PY'
-import platform
-import sys
-if platform.system() != "Darwin" or platform.machine() != "arm64" or sys.version_info[:2] != (3, 12):
-    raise SystemExit("Requires Apple Silicon macOS and Python 3.12")
-print("Platform and Python version are supported")
-PY
-
-  WA_ROOT="$PWD/.writing-assistant"
-  WA_DOWNLOADS="$WA_ROOT/downloads/0.1.1"
-  WA_ENV="$WA_ROOT/venvs/0.1.1"
-  if [ -e "$WA_ENV" ]; then
-    printf '%s\n' 'Installation directory exists; inspect it before reuse.' >&2
-    exit 1
-  fi
-  mkdir -p "$WA_DOWNLOADS"
-  curl -fL 'https://github.com/Bean2B/writing-assistant/releases/download/v0.1.1/writing_assistant-0.1.1-py3-none-any.whl' -o "$WA_DOWNLOADS/writing_assistant-0.1.1-py3-none-any.whl"
-  curl -fL 'https://github.com/Bean2B/writing-assistant/releases/download/v0.1.1/SHA256SUMS' -o "$WA_DOWNLOADS/SHA256SUMS"
-  python3.12 - "$WA_DOWNLOADS" <<'PY'
+  test ! -e .venv || { printf '%s\n' 'An installation already exists at .venv; inspect it before continuing.' >&2; exit 1; }
+  mkdir -p downloads
+  curl -fL https://github.com/Bean2B/writing-assistant/releases/download/v0.1.1/writing_assistant-0.1.1-py3-none-any.whl -o downloads/writing_assistant-0.1.1-py3-none-any.whl
+  curl -fL https://github.com/Bean2B/writing-assistant/releases/download/v0.1.1/SHA256SUMS -o downloads/SHA256SUMS
+  python3.12 - <<'VERIFY'
 from pathlib import Path
 import hashlib
-import sys
-directory = Path(sys.argv[1])
-wheel = directory / "writing_assistant-0.1.1-py3-none-any.whl"
-entries = [line.split() for line in (directory / "SHA256SUMS").read_text().splitlines() if line.strip()]
-matches = [entry[0] for entry in entries if len(entry) == 2 and entry[1] == wheel.name]
-actual = hashlib.sha256(wheel.read_bytes()).hexdigest()
-if len(matches) != 1 or actual != matches[0]:
-    raise SystemExit("Wheel SHA-256 verification failed; installation stopped")
-print("Wheel SHA-256 verified")
-PY
-  python3.12 -m venv "$WA_ENV"
-  "$WA_ENV/bin/python" -m pip install --no-index --no-deps "$WA_DOWNLOADS/writing_assistant-0.1.1-py3-none-any.whl"
-  "$WA_ENV/bin/writing-assistant" --version
-  "$WA_ENV/bin/writing-assistant" capabilities
+wheel = Path("downloads/writing_assistant-0.1.1-py3-none-any.whl")
+entries = [line.split() for line in Path("downloads/SHA256SUMS").read_text().splitlines()]
+expected = [entry[0] for entry in entries if len(entry) == 2 and entry[1] == wheel.name]
+if len(expected) != 1 or hashlib.sha256(wheel.read_bytes()).hexdigest() != expected[0]:
+    raise SystemExit("SHA-256 verification failed; installation stopped")
+print("SHA-256 verified")
+VERIFY
+  python3.12 -m venv .venv
+  .venv/bin/python -m pip install --no-index --no-deps downloads/writing_assistant-0.1.1-py3-none-any.whl
+  .venv/bin/writing-assistant --version
 )
 ```
 
-In the same workspace, check the Codex integration and initialize a new project:
+**2. Initialize a new project.** Run from the same directory:
 
 ```sh
-./.writing-assistant/venvs/0.1.1/bin/writing-assistant doctor
-./.writing-assistant/venvs/0.1.1/bin/writing-assistant init --project ./writing-project --data-dir ./writing-data --project-id my-writing
-./.writing-assistant/venvs/0.1.1/bin/writing-assistant config --project ./writing-project
-./.writing-assistant/venvs/0.1.1/bin/writing-assistant capabilities --project ./writing-project
+source .venv/bin/activate
+writing-assistant init --project ../demo-project --data-dir ../demo-data --project-id demo
+writing-assistant config --project ../demo-project
+writing-assistant capabilities --project ../demo-project
 ```
 
-Run these commands individually and inspect each result. If `doctor` fails, local record operations remain available; AI tasks require the conditions in [Codex support](codex-support.md#english). Inspect existing project configuration instead of repeating `init`. Default initialization selects the `lotus` writing mode and enables World Sandbox, which are optional internal writing capabilities; the executable remains `writing-assistant`. For Direct Mode, explicitly add `--writing-mode none --world-sandbox off` to a new project's `init` command.
+`demo-project` holds configuration; `demo-data` holds manuscripts and run records. Both sit outside the installation directory. Project ID `demo` matches the bundled source examples. You may choose other paths and an ID, then use that ID in requests. For an existing project, inspect `config` instead of running `init` again.
 
-Installation files are under `.writing-assistant/venvs/0.1.1`, downloads under `.writing-assistant/downloads/0.1.1`, project configuration under `writing-project`, and original writing and records under `writing-data`. Back up creative data before moving, deleting or replacing an installation. Software installation does not migrate or delete existing writing. Retain the actual paths selected.
+**3. Check the AI integration.**
 
-See [README](../README.md#english) to build from source. Continue with [Agent usage](agent-usage.md#english), [records](records.md#english) and [tasks](tasks.md#english). AI tasks require a separately installed and signed-in, supported Codex CLI. Codex manages its own credentials; do not put them in Writing Assistant project configuration or public feedback.
+```sh
+writing-assistant doctor
+```
+
+`doctor` does not call a model. `live_supported: true` means the local CLI meets integration requirements. `runtime_readiness: not_checked` means no live AI request was sent. Local record operations remain available if this check fails; see [Codex support](codex-support.md#english) for missing requirements.
+
+Continue with [saving an idea](records.md#english) or [Agent usage](agent-usage.md#english). In a new terminal, activate `.venv` again or use the full installed CLI path.
+
+### Run from source
+
+From the repository's source directory:
+
+```sh
+PYTHONPATH=src python3.12 -B -m writing_assistant capabilities
+```
+
+To build a local wheel, run from a source directory without an existing `.venv`:
+
+```sh
+python3.12 -m venv .venv
+.venv/bin/python -m pip wheel --no-index --no-deps --no-build-isolation . -w dist
+.venv/bin/python -m pip install --no-index --no-deps dist/writing_assistant-0.1.1-py3-none-any.whl
+```
+
+Replace `writing-assistant` in the guides with `.venv/bin/writing-assistant`. Source usage provides `examples/synthetic/`; after a wheel installation, create a request using the [request format](interface.md#english).
+
+### Updates and backups
+
+For an existing installation, read [Downloads and upgrades](release.md#english). Stop writes and back up project configuration and the complete data directory before replacing the software. Keep writing outside the installation environment, and keep Codex credentials out of project configuration.

@@ -1,204 +1,169 @@
-# 写作技法包
+# 写作技法 / Writing techniques
 
 [中文](#中文) · [English](#english)
 
 ## 中文
 
-技法包提供可明确选择、带版本的数据型指导，包括适用条件、限制与审读角度。它不决定文风、不保证文学效果，也不替 user 决定采用结果。
+技法包为构思、场景规划、起草、审读和修订提供可选择的指导。Agent 先查看适用条件、限制和审读角度，再把选定 technique 加入请求；user 可以保留自己的文风和取舍。
 
-### 发现与明确选择
+技法可用于两种写作模式，但不会增加当前模式支持的 phase。它们是随应用提供的版本化文本与数据；查看或建议技法不调用模型、不读取稿件。
 
-```sh
-writing-assistant technique list
-writing-assistant technique show narrative-structure --version 1.0.0
-writing-assistant capabilities --schema technique-pack
-```
-
-这些操作不调用模型，不读取项目或稿件。Show 返回完整 pack 及准确 byte digest `sha256`；省略 version 时选最高 numeric version，但 task 仍须明确版本。`1.0.0` 与 `1.1.0` 可分别选择，旧版 bytes 保持；`1.1.0` 增加 suggestions 的适用 selectors。
-
-`--max-bytes` 包含完整 UTF-8 JSON 和换行，默认 131072，最大 1048576；不足时为 `technique_output_limit`，不裁短 pack。
-
-| Technique ID | 用途 |
-| --- | --- |
-| `shared-task-dependency` | 通过共同任务和依赖连接人物选择 |
-| `state-and-knowledge` | 核对状态变化与人物当时可知的信息 |
-| `personal-tradeoffs` | 让选择涉及具体个人代价或竞争需求 |
-| `local-outcomes` | 使局部行动有可观察的结果 |
-| `consequential-recurrence` | 重复出现的细节改变后续选择或结果 |
-
-请求中的 `techniques` 明确给出 `pack_id`、`pack_version`、`pack_sha256`、`technique_ids`；从 discovery 复制 digest。最多八个 pack、合计十六个 technique。选 pack 不等于全选内容；缺省或空数组不载入指导。版本、digest、ID 或 phase 不符时拒绝；prepared task 冻结所选指导，不修改模式本身支持的 phase。
-
-### 检查适用建议
-
-```sh
-writing-assistant technique suggest --phase draft --task writing --story-tag knowledge-change --story-tag resource-cost --limit 3
-```
-
-建议只匹配明确 phase、task 和 story tags，不扫描稿件、不推断标签、不读 state、不调用模型。每个建议必须匹配 phase/task 和至少一个 tag。`selection_applied: false`，`suggested_selection` 仍只是候选；必须主动复制到请求才选择技法。
-
-只考虑每个 pack 最高 numeric version；没有 selectors 的 pack 仍可直接选择，但不产生建议。匹配 tag 更多者在前，pack ID 和 technique ID 确定排序；最多三项，`omitted_matches` 记录其他匹配。`limit` 为 0–3，空 tags 或零 limit 返回空建议；每次最多十六个唯一 tags。Tags 为最多 64 字符的 lowercase letters/digits/hyphens/underscores，首位为字母或数字；例如 `chapter_11` 保留原拼写。未知 task/tag 不匹配，不替换其含义。
-
-### 增加 data-only pack
-
-在 `src/writing_assistant/technique_packs/PACK_ID/MAJOR.MINOR.PATCH.json` 增加符合 [pack schema](../schemas/technique-pack-v1.schema.json) 的 JSON，文件名/目录与内部 ID/version 一致，并将准确路径加入 `public-files.json`。改变 bytes 使用新版本，不替换旧版本；详见 [版本规则](versioning.md)。
-
-Pack 声明标题、summary、通用与各 phase 指导，以及最多十六项 technique；每项保留适用说明、guidance、limitations、review criteria。可选 applicability 只包含明确 selectors：tasks 最多八项、story_tags 最多十六项。Pack 是文本与数据，不授权材料读取、执行或采用。
-
-加载器验证身份、版本、唯一 ID、phase、文本上限和 regular-file 状态。单包最多 65536 bytes，总共最多 32 个 pack versions；拒绝 symlink 和损坏内容。没有外部 pack 路径、网络查找、动态 import 或可执行扩展。
-
-## English
-
-Technique packs provide explicitly selected writing guidance for concept,
-scene planning, drafting, review and revision. They are versioned application
-data with applicability, instructions, limitations and review criteria. Guidance
-does not establish that a generated story meets those criteria or determine
-whether the user should adopt it.
-
-### Discover and select
+### 查看有哪些技法
 
 ```sh
 writing-assistant technique list
-writing-assistant technique show narrative-structure --version 1.0.0
-writing-assistant capabilities --schema technique-pack
+writing-assistant technique show narrative-structure --version 1.1.0
 ```
 
-These commands make no model call and read no project or manuscript. `list`
-returns bounded validated metadata. `show` returns one complete pack, including
-its exact byte digest in `sha256`. Omitting `--version` selects the highest
-bundled numeric version; a task selection must still name the exact version.
-The `narrative-structure` versions `1.0.0` and `1.1.0` remain independently
-selectable. Version `1.1.0` adds declared applicability selectors for suggestions;
-version `1.0.0` retains its original bytes.
-`--max-bytes` bounds the complete UTF-8 JSON output including its newline; its
-default is 131072 and maximum is 1048576. An undersized bound returns
-`technique_output_limit` without truncating the pack.
+`list` 返回 pack metadata，`show` 返回完整 pack 和准确 byte digest `sha256`。省略 `--version` 会选最高 numeric version；task 中仍要写准确版本。`narrative-structure` 的 `1.0.0` 和 `1.1.0` 都可明确选择。
 
-The bundled `narrative-structure` pack offers these abilities:
+| Technique ID | 用途 | `1.1.0` 的匹配 tags |
+| --- | --- | --- |
+| `shared-task-dependency` | 通过共同任务和依赖连接人物选择 | `shared-task`, `interdependent-characters` |
+| `state-and-knowledge` | 核对状态变化和人物当时可知的信息 | `knowledge-change`, `resource-cost`, `time-order`, `continuity-constraint` |
+| `personal-tradeoffs` | 让选择涉及具体个人代价或竞争需求 | `personal-stakes`, `competing-needs`, `consequential-choice` |
+| `local-outcomes` | 使局部行动有可观察的结果 | `local-episode`, `observable-result` |
+| `consequential-recurrence` | 让再次出现的细节改变后续选择或结果 | `recurring-question`, `promise`, `repeated-detail` |
 
-| Technique ID | Use |
-| --- | --- |
-| `shared-task-dependency` | Connect people through a practical task and dependencies. |
-| `state-and-knowledge` | Keep physical state and participant knowledge explicit. |
-| `personal-tradeoffs` | Give a decision a concrete personal cost or competing need. |
-| `local-outcomes` | Give a local action an observable result. |
-| `consequential-recurrence` | Reuse a detail when its return changes a later choice or result. |
+### 把选定技法加入请求
 
-Add `techniques` to a writing request or workflow request. Copy `sha256` from
-discovery into `pack_sha256`; the placeholder below is not a usable digest:
+在[写作请求](interface.md#中文)或 [workflow 请求](workflows.md#中文)中添加 `techniques`。以下为要加入请求的字段片段；将占位值换成 `show` 返回的 `sha256`：
 
 ```json
 {
   "techniques": [{
     "pack_id": "narrative-structure",
-    "pack_version": "1.0.0",
+    "pack_version": "1.1.0",
     "pack_sha256": "COPY_RETURNED_SHA256",
     "technique_ids": ["state-and-knowledge", "local-outcomes"]
   }]
 }
 ```
 
-At most eight packs and sixteen selected techniques in total are supported.
-Technique IDs are explicit; selecting a pack does not select every technique.
-An absent or empty array loads no pack guidance. Selection checks the exact pack
-version, digest, IDs and phase applicability before preparation. Changed bytes
-return `changed_technique_pack`; missing IDs or unsupported phases are errors.
-Packs are optional in both writing modes and do not change the active mode's
-supported phases. A prepared task freezes the selected guidance and includes
-the application policy and bundled assets in its execution binding.
+只选择列出的 technique IDs，选 pack 不等于全选。省略 `techniques` 或使用 `[]` 都不加载 pack 指导。最多八个 pack、合计十六个 technique。
 
-Review instructions ask for observations supported by the selected draft and
-materials. Review output remains feedback for that exact draft. It does not
-adopt text, create world facts, or mechanically prove prose quality.
+Preparation 核对准确 version、digest、ID 和 phase；已准备的 task 固定所选指导。之后想改选，需新建请求和 task。技法指导不代表正文已经满足要求；审读意见仍对应准确稿件与选定材料。
 
-### Suggest an applicable set
+### 根据任务和标签查看建议
 
-Applicability assistance uses a declared phase, a task identifier, and explicit
-story tags. It does not scan a manuscript, infer tags, read project state, or call
-a model:
+如果已经明确写作任务和显式标签，可请求最多三项适用建议：
 
 ```sh
 writing-assistant technique suggest --phase draft --task writing --story-tag knowledge-change --story-tag resource-cost --limit 3
 ```
 
-Its Python interface is:
+结果包含匹配的 tags、phase/task 原因和可复制的 `suggested_selection`。先检查建议，再将选中的内容放进请求；`selection_applied: false` 表示没有自动启用任何指导。
+
+建议按明确 selectors 匹配：每项必须符合 phase、task，且至少匹配一个 tag。`1.1.0` 声明 `writing`、`review`、`revision` 三种 task selectors。应用不扫描稿件、不推断 tags、不读取 story state。
+
+Python 调用方可用同样的参数：
 
 ```python
 from writing_assistant.techniques import suggest
 
 candidates = suggest(
-    "draft", task="writing", story_tags=["knowledge-change", "resource-cost"], limit=3,
+    "draft", task="writing",
+    story_tags=["knowledge-change", "resource-cost"], limit=3,
 )
 ```
 
-The result identifies each suggested technique by exact pack version and digest,
-reports the matched tags, and explains the declared phase and task matches.
-`suggested_selection` is a candidate in the ordinary selection format. Copy it
-into a writing or workflow request only when choosing those techniques. Discovery
-always reports `selection_applied: false`; a suggestion never changes a prepared
-task or enables guidance by itself. Supplying `techniques: []` remains a complete
-zero-technique choice. An empty tag list or `limit=0` returns no suggestions and
-does not load pack guidance.
+只考虑每个 pack 的最高 numeric version；没有 selectors 的 pack 仍可直接选择，但不产生建议。匹配 tags 较多的排在前面，pack ID 和 technique ID 确定同分顺序；`omitted_matches` 表示其他匹配项。未知 task/tag 或空 tags 不产生匹配，`limit=0` 返回空建议。
 
-Suggestion input tags use the story-state identifier vocabulary: lowercase
-letters, digits, hyphens and underscores, with a letter or digit first and at
-most 64 characters. Tags such as `chapter_11` retain their exact spelling.
-Unknown tags yield no match; they are not renamed or treated as pack IDs.
-Pack IDs, technique IDs, declared task IDs and versions keep their separate
-contracts. Pack applicability selectors remain explicit exact-match data.
+### 参数、错误与 pack 格式
 
-Each suggestion must match the declared phase, a declared task selector, and at
-least one explicit story tag. Only the highest bundled numeric version of each
-pack participates. Packs without selectors remain directly selectable and yield
-no suggestions. There is no prose keyword matching or automatic selection of all
-techniques. More matching explicit tags rank first; pack ID and technique ID
-break ties deterministically. At most three suggestions are returned;
-`omitted_matches` exposes additional matching candidates. Adding a pack may
-change discovery results, while existing exact selections remain frozen.
-
-Version `1.1.0` declares the tasks `writing`, `review`, and `revision`. Its tags
-are:
-
-| Technique ID | Explicit story tags |
+| 参数或错误 | 如何处理 |
 | --- | --- |
-| `shared-task-dependency` | `shared-task`, `interdependent-characters` |
-| `state-and-knowledge` | `knowledge-change`, `resource-cost`, `time-order`, `continuity-constraint` |
-| `personal-tradeoffs` | `personal-stakes`, `competing-needs`, `consequential-choice` |
-| `local-outcomes` | `local-episode`, `observable-result` |
-| `consequential-recurrence` | `recurring-question`, `promise`, `repeated-detail` |
+| `--max-bytes` | `list`、`show`、`suggest` 完整 UTF-8 JSON 与最后换行的上限；默认 131072，最大 1048576。 |
+| `technique_output_limit` | 提高 byte 上限；应用不会裁短 pack。 |
+| `changed_technique_pack` | 重新查看准确 pack，核对 version 与 digest，再明确建立新请求。 |
+| `invalid_technique_suggestion` | 检查 task、tags 和 limit 的格式。 |
+| `unsupported_phase` | 使用该写作模式和所选技法都支持的 phase。 |
 
-A request supports at most sixteen unique tags. `limit` is an integer from zero
-through three. Unknown tags or task IDs simply yield no match. Malformed selectors
-return `invalid_technique_suggestion`; unsupported phases return
-`unsupported_phase`. Matching explains declared applicability, without asserting
-that a technique will improve the story or resolve a review concern.
+每次建议最多十六个唯一 tags；tag 最多 64 字符，使用 lowercase letters、digits、hyphens、underscores，首位为字母或数字。`chapter_11` 保留原拼写；tag、task ID、pack ID 与 technique ID 分别使用各自的标识，应用不改名或推断同义词。`limit` 为 0–3。
 
-### Add a data-only pack
+Pack 包含 title、summary、通用指导、各 phase 指导，以及每项 technique 的 `applies_when`、guidance、limitations、review criteria。可选 `applicability` 只含明确 selectors：`tasks` 最多八项、`story_tags` 最多十六项。`1.0.0` 无须具备建议 selectors，准确旧版本选择仍可使用。
 
-Create a JSON file at
-`src/writing_assistant/technique_packs/PACK_ID/MAJOR.MINOR.PATCH.json` and follow
-the [pack schema](../schemas/technique-pack-v1.schema.json). The filename version
-and directory ID must equal `pack_version` and `pack_id` in the JSON. Use a new
-version when changing bytes rather than silently replacing a version selected
-by an existing task. Include the exact new asset path in `public-files.json`
-when distributing it; package construction uses that explicit file list.
+当前加载 bundled packs，不支持外部 pack 路径、网络查找或可执行扩展。每包最多 65536 bytes、十六项 technique；应用最多加载 32 个 pack versions，拒绝损坏内容和 symlink。可用 `writing-assistant capabilities --schema technique-pack` 或 [pack schema](../schemas/technique-pack-v1.schema.json)查看格式；版本兼容见[版本规则](versioning.md#中文)。
 
-A pack declares a title, summary, general guidance, guidance for every supported
-phase, and up to sixteen techniques. Each technique declares its ID, title,
-applicable phases, `applies_when`, guidance, limitations and review criteria.
-Use concise operational instructions and synthetic examples. Pack text cannot
-grant material access, add user authorization or override task safety rules.
-An optional technique-level `applicability` object declares nonempty unique
-`tasks` and `story_tags` arrays, bounded respectively to eight and sixteen IDs.
-These data-only selectors enable suggestions; they do not change explicit
-selection validation or add guidance to a prompt. Prior pack versions do not need
-this optional field. Add selectors through a new version rather than replacing
-already versioned bytes.
+## English
 
-The loader validates bundled JSON before listing or selecting it, including
-identity, version, unique IDs, phase lists, text bounds and a maximum 65536 bytes
-per pack. The bundle supports at most 32 pack versions. It rejects symbolic links
-and malformed entries. There is no runtime import, external pack path, network
-lookup or executable extension hook. The Agent inspects discovery and chooses
-applicable versions; the application validates the selection and freezes it in
-the task or workflow. Use [durable workflows](workflows.md) for application-owned
-chapter sequencing and result dependencies.
+Technique packs provide optional guidance for concept work, scene planning, drafting, review, and revision. An Agent reads applicability, limitations, and review criteria before adding selected techniques to a request. The user retains control of style and content choices.
+
+Packs work in both writing modes without adding phases to the active mode. They are bundled, versioned text and data. Inspecting or suggesting techniques makes no model call and reads no manuscript.
+
+### Discover available techniques
+
+```sh
+writing-assistant technique list
+writing-assistant technique show narrative-structure --version 1.1.0
+```
+
+`list` returns pack metadata; `show` returns a complete pack and its exact byte digest in `sha256`. Omitting `--version` selects the highest numeric version, but task requests still name an exact version. Both `1.0.0` and `1.1.0` of `narrative-structure` remain directly selectable.
+
+| Technique ID | Use | Matching tags in `1.1.0` |
+| --- | --- | --- |
+| `shared-task-dependency` | Connect character choices through a practical task and dependencies. | `shared-task`, `interdependent-characters` |
+| `state-and-knowledge` | Check changes in state and what each participant can know. | `knowledge-change`, `resource-cost`, `time-order`, `continuity-constraint` |
+| `personal-tradeoffs` | Give choices a concrete personal cost or competing need. | `personal-stakes`, `competing-needs`, `consequential-choice` |
+| `local-outcomes` | Give local actions observable results. | `local-episode`, `observable-result` |
+| `consequential-recurrence` | Let a returning detail change later choices or results. | `recurring-question`, `promise`, `repeated-detail` |
+
+### Add selected techniques to a request
+
+Add `techniques` to a [writing request](interface.md#english) or [workflow request](workflows.md#english). This is a field fragment to include in that request; replace the placeholder with `sha256` returned by `show`:
+
+```json
+{
+  "techniques": [{
+    "pack_id": "narrative-structure",
+    "pack_version": "1.1.0",
+    "pack_sha256": "COPY_RETURNED_SHA256",
+    "technique_ids": ["state-and-knowledge", "local-outcomes"]
+  }]
+}
+```
+
+Only the named technique IDs are selected. Choosing a pack does not select every technique. An omitted `techniques` field or `[]` loads no pack guidance. A request supports at most eight packs and sixteen techniques in total.
+
+Preparation checks the exact version, digest, IDs, and phase applicability. A prepared task freezes its selected guidance; use a new request and task to change it. Selected guidance does not establish that the prose meets its criteria. Review feedback still refers to an exact draft and selected material.
+
+### Suggest techniques from a task and tags
+
+When the task and tags are already explicit, request up to three applicable suggestions:
+
+```sh
+writing-assistant technique suggest --phase draft --task writing --story-tag knowledge-change --story-tag resource-cost --limit 3
+```
+
+The result includes matched tags, phase/task explanations, and a copyable `suggested_selection`. Inspect it before putting chosen techniques into a request. `selection_applied: false` means no guidance has been enabled automatically.
+
+Matching uses declared selectors: every suggestion must match the phase, task, and at least one explicit tag. Version `1.1.0` declares task selectors `writing`, `review`, and `revision`. The application does not scan prose, infer tags, or read story state.
+
+Python callers can use the same inputs:
+
+```python
+from writing_assistant.techniques import suggest
+
+candidates = suggest(
+    "draft", task="writing",
+    story_tags=["knowledge-change", "resource-cost"], limit=3,
+)
+```
+
+Only the highest numeric version of each pack participates. Packs without selectors remain directly selectable but yield no suggestions. More matching tags rank first, with pack ID and technique ID breaking ties. `omitted_matches` reports additional matches. Unknown tasks/tags and empty tags yield no match; `limit=0` returns no suggestions.
+
+### Parameters, errors, and pack format
+
+| Parameter or error | What to do |
+| --- | --- |
+| `--max-bytes` | Bounds complete UTF-8 JSON including the final newline for `list`, `show`, and `suggest`; default 131072, maximum 1048576. |
+| `technique_output_limit` | Increase the byte bound; packs are never truncated. |
+| `changed_technique_pack` | Inspect the exact pack again, check version and digest, and explicitly prepare a new request. |
+| `invalid_technique_suggestion` | Check the task, tags, and limit format. |
+| `unsupported_phase` | Choose a phase supported by both the writing mode and selected techniques. |
+
+Suggestions accept at most sixteen unique tags. A tag has at most 64 characters: lowercase letters, digits, hyphens, and underscores, starting with a letter or digit. `chapter_11` keeps its exact spelling. Tags, task IDs, pack IDs, and technique IDs have distinct meanings; the application does not rename them or infer synonyms. `limit` ranges from 0 to 3.
+
+Packs declare a title, summary, general and phase guidance, and each technique's `applies_when`, guidance, limitations, and review criteria. Optional `applicability` contains explicit selectors only: up to eight `tasks` and sixteen `story_tags`. Version `1.0.0` does not need suggestion selectors and remains usable through exact selection.
+
+The application loads bundled packs, without external pack paths, network lookup, or executable extensions. Each pack allows up to 65536 bytes and sixteen techniques; the bundle allows up to 32 pack versions and rejects malformed data and symlinks. Inspect the format with `writing-assistant capabilities --schema technique-pack` or the [pack schema](../schemas/technique-pack-v1.schema.json). See [versioning](versioning.md#english) for compatibility.

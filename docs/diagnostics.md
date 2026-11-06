@@ -1,25 +1,41 @@
-# 本地诊断记录
+# 本地诊断 / Local diagnostics
 
 [中文](#中文) · [English](#english)
 
 ## 中文
 
-诊断只保存明确选定的本地观察与适用条件，不是执行许可。先区分调用输入、应用契约、模型正文、provider/网络和未知原因；timeout、空输出或延迟本身不能证明应用有 bug。
+诊断 case 用于保存一次问题的选定证据、原因判断和适用条件。记录保存在项目的独立数据目录，不自动扫描其他文件、环境或 clone，也不发送 telemetry。适合排查执行、保存和恢复问题；AI 正文的文学评价应回到创作要求与审读。
 
-### 保存与绑定证据
+### 先确认问题发生在哪一步
+
+| 观察 | 下一步 |
+| --- | --- |
+| 参数、文件或请求无效 | 保留 exit code 和安全 stderr，修正输入，停止依赖操作。 |
+| 输入准确但准备、状态、保存或恢复违反契约 | 保留准确输入、版本引用及可复现结果，检查应用行为。 |
+| 执行完成，正文不符合要求 | 对照创作目标审读准确输出。 |
+| 明确的 provider / transport 错误 | 保留 receipt 与安全分类，核对有关服务或 routing 信息。 |
+| 只有 timeout、空输出或延迟 | 保持原因 `unknown` 或 `hypothesis`，指出尚缺证据。 |
+
+本地耗时可能包含 CLI 启动、等待、网络与模型执行，不能拆分证明某个环节故障。Lock 只反映本地操作。后续成功前的非 terminal 诊断仍是观察，不等于 task 失败。更换模型或 deadline 也不证明原问题已修复。
+
+### 保存明确选择的证据
 
 ```sh
-writing-assistant diagnostics --project ../demo-project capture case.json --evidence evidence.json
-writing-assistant task --project ../demo-project diagnostics task-one --expected-plan-sha256 PLAN_SHA256 --include-preflight
+writing-assistant capabilities --schema diagnostic-capture
+writing-assistant diagnostics --project ../demo-project capture case.json --evidence selected-evidence.txt
 ```
 
-通过 `capabilities --schema diagnostic-capture`、`diagnostic-revision` 发现格式。只提供已获授权的证据。任务绑定 context 应从 `task diagnostics` 原样复制，设置实际 failure category，不自行推导源码或环境 hash；返回内容不含稿件、URI、私有路径或原始环境。
+`case.json` 包含 `case_id`、完整 `context`，可选 `summary`、`confidence`、`disposition`、`diagnosis`、`expires_at`、`origin`、`secrets`。只选择适合本次诊断的获准 UTF-8 证据；应用在保存前过滤已知 credential pattern 与明确提供的 secrets，并记录 redacted/truncated/exact 状态。过滤不能识别所有私人含义，原始诊断不应进入源码、安装包或公开反馈。
 
-Context 绑定 `project_id`、`component`、`operation`、`category`、`revision`、`environment`、`code_state`、`inputs`、`configuration`、`trigger`、`branch`、`worktree`。缺少相关条件不能证明可复用；branch/worktree 为 null 表示允许跨这些边界，否则限制适用。不同 clone 仅通过明确配置相同 data root/project ID 共享 case。
+诊断绑定已准备 task 时，先获取应用生成的 context：
 
-Confidence 为 `unknown`、`hypothesis`、`confirmed`，disposition 为 `advisory`、`blocker`。可复用诊断要求原因已确认、条件完整匹配、证据完好和明确未过期的 `expires_at`；错误文字相同不足以证明同因。Credential-free routing/CA metadata 变化会使旧匹配失效，`child_routing_proof=unknown` 不能自动复用历史 blocker。
+```sh
+writing-assistant task --project ../demo-project diagnostics TASK_ID --expected-plan-sha256 PLAN_SHA256 --include-preflight
+```
 
-### 查看与修订
+原样复制返回的 `context`，仅把 `category` 设为观察到的错误分类。它不包含稿件、URI、私有路径或原始环境；不要重新计算 hash。`validation` 会列出已核对的 metadata 和尚待 execute 检查的正文、外部原件、prompt bytes 与 parent CAS。该命令不调用模型、probe 或进程，不写入本地数据，详见 [task diagnostics](tasks.md#中文)。
+
+### 查看、修订与检查适用性
 
 ```sh
 writing-assistant diagnostics --project ../demo-project show case-ref.json
@@ -29,15 +45,19 @@ writing-assistant diagnostics --project ../demo-project preflight context.json
 writing-assistant diagnostics --project ../demo-project query --component writing-execution --operation writing --limit 20
 ```
 
-保留返回的完整 result 或 `ref`。默认只看 metadata/证据描述；`--include-evidence` 才读取保存的证据与已授权诊断文字。Reference 绑定不可变revision；更新使用最新 reference 的 CAS，过时返回 `diagnostics_conflict`。适用条件变化要求新证据，首次证据不删除。
+把 capture/revise 的完整结果或 `ref` 保存为 `case-ref.json`。默认 show、query 和 preflight 返回 metadata 与证据描述；`show --include-evidence` 才返回已保存证据和诊断文字。Reference 指向不可变 revision；revise 使用最新 ref 检查并发，旧 ref 返回 `diagnostics_conflict`。修订格式见 `capabilities --schema diagnostic-revision`，通过 `--evidence FILE` 明确添加新证据。
 
-确认修复后，明确 revise 对应 case，使用 `status: resolved`、`confidence: confirmed`、有依据的 diagnosis/resolution 和适用的成功 verification。记录 case 本身不执行验证；已有证据可复用时不为结项重跑模型。未知原因或其他项目的 case 不被顺带解决。
+Context 键为 `project_id`、`component`、`operation`、`category`、`revision`、`environment`、`code_state`、`inputs`、`configuration`、`trigger`、`branch`、`worktree`。填写所有相关条件；branch/worktree 为 null 明确允许跨这些边界复用。不同 clone 只有显式使用相同 data root/project ID 才共享 case。
 
-Preflight 返回 `blocking`、`matches`、`coverage`、`history`、`warnings`、`next_cursor`、`skipped_checks`、`retry_authorized`。只有已确认、open、未过期且适用的 blocker 阻塞对应操作。没有可选 history namespace 时可报告 `history: absent`、`coverage: complete`、零扫描；损坏或不可访问时为 unavailable/degraded，不能报告无历史问题。已有 case 为 present，但 pending/损坏证据仍可降低 coverage。
+Confidence 为 `unknown`、`hypothesis`、`confirmed`；disposition 为 `advisory`、`blocker`。诊断复用要求原因 confirmed、条件完整匹配、证据完好且 `expires_at` 未过期。只有 open、confirmed、未过期且适用的 blocker 阻塞相应操作。相同错误文字不能证明同因；routing/CA metadata 变化会使旧匹配失效，`child_routing_proof: unknown` 不能自动复用历史 blocker。
 
-Query/preflight 的 `--byte-limit` 限制 JSON，不含 transport 换行；使用返回的 cursor，不将其当作路径。诊断结果结构检查不替代来源完整性和授权；`retry_authorized` 仍为 false。Mutation 的 `output_contract_violation` 可能已有本地效果，先查看返回的 case/pending 引用。
+修复后用最新 ref 明确设为 `status: resolved`、`confidence: confirmed`，填写有依据的 diagnosis/resolution 和成功 verification。记录 case 本身不执行验证；已有适用证据可复用，不必为关闭 case 重新调用模型。更改适用条件需要新证据，首次证据继续保留。
 
-### 中断与保留
+Preflight 的 `coverage`、`history`、`warnings`、`skipped_checks` 说明检查范围。没有历史可报告 `history: absent`、`coverage: complete`、零扫描；损坏或不可访问则为 unavailable/degraded。`history: present` 也可能因 pending 或损坏证据而降级。`retry_authorized` 仍为 `false`。
+
+`--byte-limit` 约束 JSON，不含 transport 换行。分页使用返回的 `next_cursor`，不要把它当路径。Mutation 的 `output_contract_violation` 可能已有保存效果，先查看返回的 case/pending 引用。
+
+### 恢复中断保存与管理容量
 
 ```sh
 writing-assistant diagnostics --project ../demo-project pending
@@ -46,98 +66,42 @@ writing-assistant diagnostics --project ../demo-project recover PENDING_ID --act
 writing-assistant diagnostics --project ../demo-project prune withdrawn-case-ref.json
 ```
 
-只使用返回的 pending ID。Recover 在保存发布前核对完整 artifacts 与 expected parent；不完整内容保留。Discard 只删除明确选中的 pending transaction；prune 要求 withdrawn case 的最新 ref，不自动删除未解决证据或当前结论。
+只使用返回的 pending ID。Recover 核对完整保存内容与 expected parent 后完成保存；不完整内容继续保留。Discard 只删除选定 pending transaction。Prune 要求 withdrawn case 的最新 ref，不自动删除未解决证据或当前结论。
 
-证据输入、存储 bytes、case/revision 数、扫描、pending、总容量和时长均有上限，见 discovery。容量问题需要明确保留或预算决定，不为凑成功删除证据。二次 capture 失败要保留原始操作错误。原始诊断不进入源码、安装包或公开反馈。
+证据输入、保存 bytes、case/revision 数、扫描、pending、总容量和时长均有限额，见 discovery。容量不足时先决定保留策略；二次诊断保存失败不能覆盖原操作错误。
 
 ## English
 
-Diagnostic cases retain explicitly selected observations and scoped diagnoses in
-the initialized project's separate user data root. They are local user data,
-independent of chat history. The application does not scan Git, environment
-variables, unrelated files or other clones to discover diagnostics. It sends no
-telemetry. See [privacy](privacy.md) for the service boundary of explicit AI calls.
+A diagnostic case stores selected evidence, a diagnosis and the conditions where it applies. Cases live in the project's separate data directory. The application does not automatically scan other files, environments or clones, and sends no telemetry. Use diagnostics for execution, storage and recovery problems; assess literary output against creative requirements and review feedback.
+
+### Identify the failing boundary first
+
+| Observation | Next step |
+| --- | --- |
+| Invalid arguments, files or request | Retain exit code and safe stderr, correct input and stop dependent operations. |
+| Accurate inputs but a preparation, status, storage or recovery contract is violated | Retain exact inputs, version references and a reproducible result; inspect application behavior. |
+| Execution completed but prose misses the goal | Review the exact output against the creative requirements. |
+| Explicit provider / transport error | Retain the receipt and safe category; inspect relevant service or routing evidence. |
+| Only timeout, empty output or delay is known | Keep the cause `unknown` or `hypothesis` and identify missing evidence. |
+
+Local duration can include CLI startup, waiting, network and model execution; it cannot attribute their contributions. Locks describe local operations. A nonterminal diagnostic before later success remains an observation, not a failed task. Changing model or deadline does not establish a repair.
 
 ### Capture selected evidence
 
 ```sh
+writing-assistant capabilities --schema diagnostic-capture
 writing-assistant diagnostics --project ../demo-project capture case.json --evidence selected-evidence.txt
 ```
 
-Use `capabilities --schema diagnostic-capture` or
-`capabilities --schema diagnostic-revision` to request each schema. `case.json` contains
-`case_id`, a complete applicability `context`, and optional `summary`,
-`confidence`, `disposition`, `diagnosis`, `expires_at`, `origin` and `secrets`.
-Evidence is a separately selected UTF-8 file, never an automatic process or
-environment dump. Known credential patterns and explicitly supplied secrets are
-redacted before persistence. Retention metadata says whether bytes were redacted,
-truncated or retained exactly; altered bytes are not described as an exact original.
-Pattern matching cannot recognize every private meaning in arbitrary text, so
-select only evidence authorized for this diagnostic purpose.
+`case.json` contains `case_id`, a complete `context`, and optional `summary`, `confidence`, `disposition`, `diagnosis`, `expires_at`, `origin`, `secrets`. Select only authorized UTF-8 evidence appropriate to this case. Known credential patterns and explicitly supplied secrets are filtered before storage, with retention metadata distinguishing redacted, truncated and exact bytes. Filtering cannot recognize all private meaning; keep raw diagnostics outside source, packages and public feedback.
 
-### Identify the failing boundary first
-
-Keep the observed outcome separate from its cause. A timeout, empty output or
-provider error does not by itself establish an application defect. Use the first
-retained receipt and the last completed operation before deciding what to inspect:
-
-| Boundary | Evidence to retain | Appropriate next action |
-| --- | --- | --- |
-| Calling Agent or local input | Command exit code, safe stderr, and whether a valid request reached the application. | Correct the selected input or invocation. Stop dependent commands when their prerequisite fails; do not parse absent stdout as a result. |
-| Application | A reproducible contract violation in preparation, status reporting, persistence or recovery, with exact input and source bindings. | Repair that behavior and verify the affected contract. |
-| Model output | Completed execution plus the exact returned text and the unmet creative requirement. | Review the content against the user's intent. Literary quality is not proof of an execution or storage defect. |
-| Provider, transport or network | An explicit service/transport failure and its safe structured category, if available. | Preserve the failure and inspect relevant routing or service evidence. Do not resend uncertain work. |
-| Unattributed | The symptom is known but the evidence does not distinguish the boundaries above. | Keep confidence `unknown` or `hypothesis`; name the missing evidence instead of assigning a root cause. |
-
-Elapsed child-process time can include CLI startup, service waiting, network and
-model execution. It does not identify their individual contributions. Local lock
-activity only indicates a local operation, not backend health or progress. A
-nonterminal diagnostic followed by successful completion remains an observation;
-it is not a failed task. Preserve explicit model and effort selections while
-investigating. Changing a deadline or model is a workflow choice, not evidence
-that the previous failure was fixed.
-
-Context keys are `project_id`, `component`, `operation`, `category`, `revision`,
-`environment`, `code_state`, `inputs`, `configuration`, `trigger`, `branch` and
-`worktree`. Fact dictionaries contain bounded string, boolean or integer values.
-Record all relevant code/dependencies, inputs, configuration, environment and
-trigger facts. Missing relevant facts cannot prove reuse. A null branch/worktree
-explicitly permits sharing across those boundaries; non-null values restrict
-applicability. Clones share cases only through explicit configuration of the same
-data root and project ID. There is no implicit clone linkage.
-
-Confidence is `unknown`, `hypothesis` or `confirmed`; disposition is `advisory`
-or `blocker`. A reusable diagnosis requires confirmed cause, complete matching
-conditions, intact retained evidence and an explicit unexpired `expires_at`.
-Identical error wording alone never proves the same cause. Different text does
-not invalidate matching structured facts. `origin` is retained as a digest;
-ordinary results do not disclose its arbitrary values.
-
-### Bind a case to a prepared writing task
-
-Use `task diagnostics` to obtain the actual execution hook's context instead of
-reconstructing code/policy hashes or environment facts:
+For a prepared task, obtain the application's own diagnostic context:
 
 ```sh
-writing-assistant task --project ../demo-project diagnostics task-one --expected-plan-sha256 PLAN_SHA256 --include-preflight
+writing-assistant task --project ../demo-project diagnostics TASK_ID --expected-plan-sha256 PLAN_SHA256 --include-preflight
 ```
 
-Copy the returned `context` unchanged into capture metadata, setting only
-`category` to the observed structured failure category. For an applicability
-revision, preserve the case's category and include explicit new evidence.
-The context contains opaque runtime facts, proof-status values and exact semantic input bindings,
-without manuscript text, selected URIs, private paths or raw environment values.
-Copy its values directly; the diagnostic store applies its own binding format.
-
-The returned `validation` distinguishes verified plan/configuration/policy/record
-metadata from selected content/external-original/prompt bytes not read and parent
-CAS not checked. Execution retains those independent checks. The query is bounded,
-makes no provider/process call or local write, and grants no retry authority.
-See [task diagnostics](tasks.md#obtain-task-bound-diagnostic-facts).
-Changed credential-free routing or CA file metadata invalidates old matches.
-`child_routing_proof=unknown` marks credential-bearing/ambiguous routing or missing
-CA metadata as unproven; that prevents automatic diagnostic reuse. This is local
-metadata, not authentication, CA-content validation or provider/launch attestation.
+Copy the returned `context` unchanged, setting only `category` to the observed failure category. It contains no manuscript, URI, private path or raw environment; do not hash it again. `validation` names checked metadata and content, external originals, prompt bytes and parent CAS still left to execute. This command makes no model call, probe, process launch or local write; see [task diagnostics](tasks.md#obtain-task-bound-diagnostic-facts).
 
 ### Inspect, revise and check applicability
 
@@ -149,54 +113,17 @@ writing-assistant diagnostics --project ../demo-project preflight context.json
 writing-assistant diagnostics --project ../demo-project query --component writing-execution --operation writing --limit 20
 ```
 
-Save the complete returned capture/revision result or its `ref` as `case-ref.json`.
-All diagnostic-store CLI results have definitions in
-`capabilities --schema core-results`; operation discovery links the exact output
-definition. The CLI checks references, revision numbers, retention metadata,
-hashed bindings, applicability decisions and recovery variants before emitting
-JSON. Default `show` remains metadata-only; `contents` appears only with explicit
-`--include-evidence`. Discovery declares both JSON variants and the CLI binds
-validation to that flag. Schema coverage does not authorize evidence access or retry,
-and `retry_authorized` remains `false`.
+Save the complete capture/revise result or its `ref` as `case-ref.json`. Default show, query and preflight return metadata and evidence descriptors. Only `show --include-evidence` returns retained evidence and diagnostic prose. References identify immutable revisions. Revise checks concurrency using the latest ref; stale refs return `diagnostics_conflict`. Discover the revision format with `capabilities --schema diagnostic-revision`; explicitly add evidence using `--evidence FILE`.
 
-An `output_contract_violation` returns only bounded safe operation identity and
-validated references, case IDs or pending IDs where available. Diagnostic
-mutations can already have persisted effects, so inspect those references or
-`pending` before further action. No diagnostic text, evidence or hashed binding
-dictionary is copied into this error.
-References bind the exact immutable revision. Revision uses latest-reference CAS;
-a stale update returns `diagnostics_conflict`. `changes.json` uses the catalog's
-revision schema; `--evidence FILE` explicitly selects additional evidence.
-Changing relevant applicability requires new evidence. First evidence remains
-retained. Resolving a case requires confirmed cause, a resolution and a recorded
-successful verification; recording a case does not itself perform verification.
+Context keys are `project_id`, `component`, `operation`, `category`, `revision`, `environment`, `code_state`, `inputs`, `configuration`, `trigger`, `branch`, `worktree`. Include every relevant condition. Null branch/worktree explicitly allows reuse across those boundaries. Clones share cases only through explicit configuration of the same data root and project ID.
 
-After a confirmed repair, revise the affected case using its latest exact ref.
-Set `status: resolved`, `confidence: confirmed`, the supported `diagnosis` and
-`resolution`, and a verification event only when a successful applicable check
-exists. Retain that check's candidate and evidence reference. Reuse an existing
-check when its scope still applies; do not run a model merely to close a case.
-Keep unrelated failures and unknown causes separate. An engineering repair does
-not automatically update every project's cases or authorize reopening a paused
-writing task.
+Confidence is `unknown`, `hypothesis` or `confirmed`; disposition is `advisory` or `blocker`. Reuse requires confirmed cause, complete matching conditions, intact evidence and an unexpired `expires_at`. Only open, confirmed, unexpired and applicable blockers stop the selected operation. Identical error text does not prove identical cause. Changed routing/CA metadata invalidates old matches; `child_routing_proof: unknown` prevents automatic reuse of a historical blocker.
 
-Default lookup returns safe metadata and evidence descriptors without evidence
-text or arbitrary diagnosis prose. `--include-evidence` explicitly reads retained,
-redacted evidence and authorized diagnostic prose. Query/preflight accept `--limit`,
-`--cursor` and `--byte-limit`; the byte limit bounds JSON excluding its transport
-newline. Pagination cursors are returned values, never storage paths.
+After a repair, use the latest ref to explicitly set `status: resolved`, `confidence: confirmed`, supported diagnosis/resolution and successful verification. Recording a case does not perform verification. Reuse existing applicable evidence without another model call merely to close a case. Changed applicability needs new evidence; first evidence stays retained.
 
-Preflight returns `blocking`, `matches`, invalidation reasons, `coverage`, `history`,
-`warnings`, `next_cursor`, `skipped_checks` and `retry_authorized`. Only a confirmed,
-open, unexpired and applicable blocker affects its selected operation. Advisory,
-unconfirmed, invalidated or unrelated cases do not pause unrelated work. An absent
-optional namespace, after live authority and existing-ancestor checks, reports
-`history=absent`, `coverage=complete`, zero scanned cases and no warning. This
-means no retained history at that authorized location. Damaged or inaccessible
-history reports `history=unavailable` and degraded coverage. Existing cases report
-`history=present`; pending recovery and damaged evidence can still degrade coverage.
-Authority/security/integrity checks remain mandatory and fail closed.
-Diagnostic reuse never authorizes a model retry or skipping a mandatory gate.
+Preflight's `coverage`, `history`, `warnings` and `skipped_checks` explain scope. Absent history can report `history: absent`, `coverage: complete` and zero scans. Damaged or inaccessible history reports unavailable/degraded. `history: present` can also have degraded coverage from pending work or damaged evidence. `retry_authorized` remains `false`.
+
+`--byte-limit` bounds JSON excluding its transport newline. Paginate with returned `next_cursor` values, never treating them as paths. A mutating `output_contract_violation` can follow saved effects; inspect returned case/pending references first.
 
 ### Interrupted publication and retention
 
@@ -207,15 +134,6 @@ writing-assistant diagnostics --project ../demo-project recover PENDING_ID --act
 writing-assistant diagnostics --project ../demo-project prune withdrawn-case-ref.json
 ```
 
-Use only returned pending IDs. Recovery validates complete saved artifacts and
-expected parent before publication. Incomplete work is preserved for inspection;
-`discard` explicitly removes only that selected pending transaction. Pruning is
-explicit, requires a withdrawn case's latest reference, and never automatically
-removes unresolved evidence or current conclusions.
+Use only returned pending IDs. Recover checks complete saved artifacts and expected parent before completing storage; incomplete work remains retained. Discard removes only the selected pending transaction. Prune requires a withdrawn case's latest ref and does not automatically remove unresolved evidence or current conclusions.
 
-The catalog reports the store's default limits. Evidence input, retained bytes,
-case/revision counts, scans, pending transactions, total storage and call duration
-are bounded. Capacity errors require an explicit retention or budget decision;
-do not delete evidence simply to make an affected action succeed. Failure of
-secondary capture must preserve the primary action error. Raw diagnostics belong
-outside source, packages and public feedback.
+Evidence input, retained bytes, case/revision counts, scans, pending work, total storage and duration are bounded; see discovery. Decide retention before addressing capacity errors. A secondary diagnostic capture failure must not replace the primary operation error.

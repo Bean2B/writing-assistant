@@ -1,18 +1,21 @@
-# 示例说明 / Example origin
+# 示例 / Examples
 
 [中文](#中文) · [English](#english)
 
 ## 中文
 
-`request.json` 是虚构写作请求，用于演示 Agent 通过 CLI 准备不附带材料的写作任务。
-`world.json` 是虚构小镇，包含人物、日程、信件和事件，可用于探索故事发展。
+本目录提供两份使用通用虚构数据的接口与配置示例：
 
-这些示例不包含个人数据、真实创作数据或私人记录。
+- [`request.json`](request.json)：一句话的写作请求，配合 [task 指南](../../docs/tasks.md)使用；示例 `project_id` 为 `demo`。
+- [`world.json`](world.json)：包含角色、日程和事件的场景配置，配合[角色行动推演指南](../../docs/world.md)使用。
+
+示例只用于说明操作方式，不包含私人稿件或个人数据。
 
 ## English
 
-`request.json` is a fictional request showing how an Agent prepares a writing
-task through the CLI without selected material. `world.json` is a fictional town with
-characters, schedules, a letter, and events for exploring story developments.
+This directory contains two interface and configuration examples using generic fictional data:
 
-These examples contain no personal data, real creative data, or private records.
+- [`request.json`](request.json): a one-sentence writing request for the [task guide](../../docs/tasks.md#english), using project ID `demo`.
+- [`world.json`](world.json): a scene configuration with characters, schedules and events for the [character action guide](../../docs/world.md#english).
+
+These examples illustrate usage and contain no private manuscripts or personal data.
