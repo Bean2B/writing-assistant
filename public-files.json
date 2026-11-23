@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "files": [
+    ".gitattributes",
     ".github/ISSUE_TEMPLATE/bug.yml",
     ".github/ISSUE_TEMPLATE/config.yml",
     ".github/ISSUE_TEMPLATE/feature.yml",
@@ -29,6 +30,7 @@
     "scripts/install-skill.py",
     "scripts/writing-assistant",
     "scripts/writing-assistant-provider",
+    "scripts/writing-assistant.cmd",
     "skills/writing-assistant/SKILL.md",
     "skills/writing-assistant/references/genre-notes/cultivation.md",
     "skills/writing-assistant/references/readers.md",
@@ -37,6 +39,7 @@
     "src/writing_assistant/book.py",
     "src/writing_assistant/cli.py",
     "src/writing_assistant/features.py",
+    "src/writing_assistant/filesystem.py",
     "src/writing_assistant/operations/__init__.py",
     "src/writing_assistant/operations/backup.py",
     "src/writing_assistant/operations/engineering.py",
@@ -50,6 +53,7 @@
     "src/writing_assistant/runtime/task_worker.py",
     "src/writing_assistant/runtime/task_workflow.py",
     "src/writing_assistant/runtime/tasks.py",
+    "src/writing_assistant/runtime/windows_worker.py",
     "src/writing_assistant/runtime/world_adapter.py",
     "src/writing_assistant/story/__init__.py",
     "src/writing_assistant/story/chapter_cards.py",

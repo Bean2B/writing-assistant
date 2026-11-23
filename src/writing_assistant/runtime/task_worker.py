@@ -1,4 +1,4 @@
-"""Supervise exactly one explicitly requested local adapter process on POSIX."""
+"""Supervise exactly one explicitly requested local adapter process on the local platform."""
 import json
 import os
 from pathlib import Path
@@ -14,6 +14,9 @@ MAX_RESPONSE = 2 * 1024 * 1024
 
 def run_adapter(runner, request, timeout):
     """Bound both running time and stdout before decoding the adapter response."""
+    if os.name == "nt":
+        from writing_assistant.runtime import windows_worker
+        return windows_worker.run_adapter(runner, request, timeout, MAX_RESPONSE)
     with tempfile.TemporaryDirectory() as cwd, tempfile.TemporaryFile() as inp:
         inp.write(request)
         inp.seek(0)
@@ -73,4 +76,5 @@ def main():
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     main()

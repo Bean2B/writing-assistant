@@ -216,7 +216,7 @@ def main(argv=None):
         if isinstance(result, bytes):
             sys.stdout.buffer.write(result)
         else:
-            print(json.dumps(result, ensure_ascii=False, indent=2))
+            sys.stdout.buffer.write((json.dumps(result, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
     except (ValueError, OSError, sqlite3.Error, zipfile.BadZipFile, subprocess.SubprocessError) as error:
         print(str(error), file=sys.stderr)
         return 1

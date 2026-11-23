@@ -14,6 +14,23 @@ python3 scripts/install-skill.py writing-assistant --to "/path/to/your/project/.
 
 For a personal Claude Code installation, choose `~/.claude/skills`. For a Codex-only personal installation, choose `~/.codex/skills`. Use `.agents/skills` in a project or `~/.agents/skills` at user scope when you want discovery shared with other compatible harnesses. The installer creates a link to the selected source folder. Running it again with the same source and destination reuses the link. Keep the source folder in place for as long as you use that registration. To unregister, remove the individual link in the harness directory.
 
+## Windows book files and skills
+
+Use Windows PowerShell or PowerShell 7 with a local book directory. Keep the full title in `init TITLE`. If it contains a character Windows forbids in a filename, choose a valid folder name with `--book`. Supply manuscript and card files saved as UTF-8. File input preserves CRLF, blank paragraphs and the manuscript digest across backup and restore. Windows PowerShell 5.1 can transcode redirected text, so prefer `--file` for original manuscripts.
+
+```powershell
+$book = 'books\创作作品\渡灯'
+& .\scripts\writing-assistant.cmd --book $book save 1 --file '.\第一章 正文.md' --card '.\第一章章卡.json'
+& .\scripts\writing-assistant.cmd --book $book chapter 1 --revision 1
+py -3 .\scripts\install-skill.py writing-assistant --to "$env:USERPROFILE\.agents\skills"
+```
+
+The installer uses a directory junction on local NTFS if Windows denies symbolic-link creation. Keep the source in place. Remove a junction with `cmd /c rmdir "PATH_TO_THE_JUNCTION"`. Registration is per skill and per harness.
+
+Use local NTFS for the optional private host registry. Python 3.13+ applies a private DACL when creating its directory. Each registry operation checks the owner and access rules through Windows PowerShell. ZIP files can also be extracted into a user-selected folder and run directly.
+
+The isolated engineering verification fixture requires the macOS sandbox.
+
 ## Moving a book
 
 The CLI snapshot covers `book.sqlite3`, including saved research records and registered study passages. If the book also has original files in `资料/`, carry that directory alongside the snapshot and restore it under the same book. Carry any older attachment paths used by saved records as well. Preserve their relative paths so that notes still locate their supporting files.

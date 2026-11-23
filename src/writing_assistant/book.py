@@ -1,11 +1,13 @@
 """A local book with immutable chapter revisions and source-linked author notes."""
 from contextlib import contextmanager
 import hashlib
-import os
+from pathlib import Path
 import re
 import sqlite3
 import tempfile
 import uuid
+
+from .filesystem import publish_new
 
 
 SCHEMA_VERSION = 4
@@ -78,8 +80,9 @@ def new_book(directory, title, first=1, source_case=None):
     dest = directory / "book.sqlite3"
     if dest.exists():
         raise ValueError("A book already exists in this directory.")
-    with tempfile.NamedTemporaryFile(dir=directory) as staging:
-        connection = sqlite3.connect(staging.name)
+    with tempfile.TemporaryDirectory(dir=directory) as staging:
+        database = Path(staging) / "book.sqlite3"
+        connection = sqlite3.connect(database)
         try:
             connection.executescript(SCHEMA)
             connection.row_factory = sqlite3.Row
@@ -90,7 +93,8 @@ def new_book(directory, title, first=1, source_case=None):
                 yield connection
         finally:
             connection.close()
-        os.link(staging.name, dest)
+        database.chmod(0o600)
+        publish_new(database, dest)
 
 
 def connect(directory, writable=False):

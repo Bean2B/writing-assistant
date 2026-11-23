@@ -118,7 +118,7 @@ def call_api(request):
 
 
 def call_codex(request):
-    binary = shutil.which("codex")
+    binary = shutil.which("codex.exe" if os.name == "nt" else "codex")
     if not binary:
         raise ValueError("Codex CLI unavailable.")
     with tempfile.TemporaryDirectory() as tmp:
@@ -134,6 +134,8 @@ def call_codex(request):
         cmd.append("-")
         # Use local CLI account authentication. API-key variables do not enter Codex.
         allowed = {"PATH", "HOME", "CODEX_HOME", "LANG", "LC_ALL", "TMPDIR"}
+        if os.name == "nt":
+            allowed.update({"SYSTEMROOT", "WINDIR", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "PATHEXT"})
         env = {k: v for k, v in os.environ.items() if k in allowed}
         subprocess.run(cmd, input=message(request).encode(), cwd=tmp, env=env, stdout=subprocess.DEVNULL,
                        stderr=subprocess.DEVNULL, check=True)
@@ -169,7 +171,7 @@ def process(request):
 
 if __name__ == "__main__":
     try:
-        result = process(json.load(sys.stdin))
-        print(json.dumps(result, ensure_ascii=False, allow_nan=False))
+        result = process(json.load(sys.stdin.buffer))
+        sys.stdout.buffer.write((json.dumps(result, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8"))
     except (ValueError, KeyError, TypeError, OSError, IndexError, http.client.HTTPException, subprocess.SubprocessError):
         sys.exit("The provider did not produce a complete usable response.")

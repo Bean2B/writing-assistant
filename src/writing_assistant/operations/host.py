@@ -1,6 +1,5 @@
-"""User-owned local runtime registry and verified release switching for macOS."""
+"""User-owned local runtime registry and verified release switching for local installations."""
 from contextlib import contextmanager
-import fcntl
 import hashlib
 import io
 import json
@@ -13,6 +12,8 @@ import sys
 import tempfile
 import uuid
 import zipfile
+
+from ..filesystem import exclusive_file, file_identity, linked
 
 
 def register(subs):
@@ -36,20 +37,42 @@ def hash_bytes(data):
 
 
 def check_dir(path):
-    st = path.lstat()
-    if path.is_symlink() or not path.is_dir() or st.st_uid != os.getuid() or st.st_mode & 0o077:
-        raise ValueError("Host directory must be private and owned by the current user.")
+    if linked(path) or not path.is_dir():
+        raise ValueError("Host directory must be a regular directory.")
+    if os.name == "nt":
+        # Inspect actual Windows owner and access rules. chmod mode bits do not represent a DACL.
+        powershell = Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+        check = """
+$ErrorActionPreference = 'Stop'
+$sid = [Security.Principal.SecurityIdentifier]
+$user = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+$acl = Get-Acl -LiteralPath $env:WA_REGISTRY_ROOT
+if ($acl.GetOwner($sid).Value -ne $user) { exit 1 }
+# CPython grants OWNER RIGHTS when mkdir creates a protected directory.
+$allowed = @($user, 'S-1-3-4', 'S-1-5-18', 'S-1-5-32-544')
+$rules = @($acl.GetAccessRules($true, $true, $sid) | Where-Object { $_.AccessControlType -eq 'Allow' })
+if (!$rules.Count) { exit 1 }
+foreach ($rule in $rules) { if ($rule.IdentityReference.Value -notin $allowed) { exit 1 } }
+"""
+        checked = subprocess.run([str(powershell), "-NoProfile", "-NonInteractive", "-Command", check],
+                                 env={**os.environ, "WA_REGISTRY_ROOT": str(path)}, capture_output=True, timeout=20)
+        if checked.returncode:
+            raise ValueError("Host directory must be owned by you and accessible only to you, SYSTEM and Administrators.")
+    else:
+        st = path.stat()
+        if st.st_uid != os.getuid() or st.st_mode & 0o077:
+            raise ValueError("Host directory must be private and owned by the current user.")
 
 
 @contextmanager
 def registry(root):
     check_dir(root)
+    if linked(root / "runtimes"):
+        raise ValueError("Unexpected runtime directory.")
     lock = root / "registry.lock"
-    fd = os.open(lock, os.O_RDWR | os.O_NOFOLLOW | os.O_CREAT, 0o600)
-    with os.fdopen(fd, "r+") as guard:
-        fcntl.flock(guard, fcntl.LOCK_EX)
+    with exclusive_file(lock):
         path = root / "registry.sqlite3"
-        if path.is_symlink() or not path.is_file():
+        if linked(path) or not path.is_file():
             raise ValueError("Unregistered host.")
         db = sqlite3.connect(path.resolve().as_uri() + "?mode=rw", uri=True)
         db.row_factory = sqlite3.Row
@@ -57,8 +80,7 @@ def registry(root):
             with db:
                 db.execute("BEGIN IMMEDIATE")
                 info = db.execute("SELECT * FROM identity").fetchone()
-                st = root.stat()
-                if (info["device"], info["inode"]) != (st.st_dev, st.st_ino):
+                if (info["device"], info["inode"]) != file_identity(root):
                     raise ValueError("Host registry belongs to a different directory.")
                 yield db, info
         finally:
@@ -66,11 +88,13 @@ def registry(root):
 
 
 def enroll(root):
+    if os.name == "nt" and sys.version_info < (3, 13):
+        raise ValueError("Windows host enrollment requires Python 3.13+ for private directory creation.")
     root.parent.mkdir(parents=True, exist_ok=True)
     root.mkdir(mode=0o700)
+    check_dir(root)
     (root / "runtimes").mkdir(mode=0o700)
     ident = uuid.uuid4().hex
-    st = root.stat()
     conn = sqlite3.connect(root / "registry.sqlite3")
     try:
         conn.executescript("""
@@ -78,10 +102,20 @@ def enroll(root):
             CREATE TABLE runtimes (digest TEXT PRIMARY KEY,manifest TEXT,qualified INTEGER DEFAULT 0);
         """)
         with conn:
-            conn.execute("INSERT INTO identity VALUES(?,?,?,NULL,NULL)", (ident, st.st_dev, st.st_ino))
+            conn.execute("INSERT INTO identity VALUES(?,?,?,NULL,NULL)", (ident, *file_identity(root)))
     finally:
         conn.close()
     return {"host": ident}
+
+
+def windows_reserved(part):
+    # Device names remain special even when they have an extension.
+    return part.split(".", 1)[0].rstrip(" ").upper() in WINDOWS_DEVICES
+
+
+WINDOWS_DEVICES = {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"} | {
+    prefix + digit for prefix in ("COM", "LPT") for digit in "123456789¹²³"
+}
 
 
 def manifest_from(archive):
@@ -94,18 +128,27 @@ def manifest_from(archive):
         raise ValueError("Unexpected runtime manifest.")
     if set(names) != set(m["files"]) | {"runtime-manifest.json"} or "scripts/writing-assistant" not in m["files"]:
         raise ValueError("Manifest and archive contents disagree.")
+    spelling = {"runtime-manifest.json": "runtime-manifest.json"}
     for name, checksum in m["files"].items():
         path = PurePosixPath(name)
+        for i, part in enumerate(path.parts, 1):
+            prefix = "/".join(path.parts[:i])
+            if (re.search(r'[<>:"|?*\x00-\x1f]', part) or part.endswith((" ", "."))
+                    or windows_reserved(part) or spelling.setdefault(prefix.casefold(), prefix) != prefix):
+                raise ValueError("Release paths must be distinct portable filenames.")
         if (not path.parts or path.is_absolute() or str(path) != name or ".." in path.parts or "\\" in name
                 or not isinstance(checksum, str) or not re.fullmatch("[0-9a-f]{64}", checksum)):
             raise ValueError("Invalid release member.")
+    file_names = set(names)
+    if any(str(parent) in file_names for name in m["files"] for parent in PurePosixPath(name).parents):
+        raise ValueError("A release file cannot also be a directory.")
     return m
 
 
 def verify(folder, manifest):
     actual = set()
     for path in folder.rglob("*"):
-        if path.is_symlink():
+        if linked(path):
             raise ValueError("Unexpected runtime symlink.")
         if path.is_file():
             name = path.relative_to(folder).as_posix()
@@ -122,15 +165,18 @@ def installed(root, db, digest):
         raise ValueError("Unknown runtime digest.")
     manifest = json.loads(row["manifest"])
     folder = root / "runtimes" / digest
-    if folder.is_symlink():
+    if linked(folder):
         raise ValueError("Unexpected runtime directory.")
     verify(folder, manifest)
     return row, manifest, folder
 
 
 def probe(folder, manifest):
+    env = {"PATH": os.defpath}
+    if os.name == "nt":
+        env.update({k: v for k, v in os.environ.items() if k in {"SYSTEMROOT", "WINDIR", "TEMP", "TMP"}})
     result = subprocess.run([sys.executable, "-I", "-B", str(folder / "scripts/writing-assistant"), "doctor"],
-                            cwd=folder, capture_output=True, timeout=20, env={"PATH": os.defpath})
+                            cwd=folder, capture_output=True, timeout=20, env=env)
     if result.returncode:
         raise ValueError("Fresh runtime process failed.")
     info = json.loads(result.stdout)
@@ -170,7 +216,7 @@ def execute(args):
                     path.write_bytes(data)
                     if name in {"scripts/writing-assistant", "scripts/writing-assistant-provider"}:
                         path.chmod(0o700)
-                if dest.is_symlink():
+                if linked(dest):
                     raise ValueError("Unexpected runtime directory.")
                 if dest.exists():
                     verify(dest, manifest)
@@ -195,4 +241,7 @@ def execute(args):
         probe(folder, manifest)
         if target != info["active"]:
             db.execute("UPDATE identity SET previous=active,active=?", (target,))
-        return {"active": target, "launcher": str(folder / "scripts/writing-assistant")}
+        launcher = folder / "scripts/writing-assistant"
+        if os.name == "nt" and "scripts/writing-assistant.cmd" in manifest["files"]:
+            launcher = launcher.with_suffix(".cmd")
+        return {"active": target, "launcher": str(launcher)}

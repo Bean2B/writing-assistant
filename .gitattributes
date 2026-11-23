@@ -1,0 +1,3 @@
+# Catalog hashes refer to exact bytes, including in a Git for Windows checkout.
+data/**/*.json text eol=lf
+scripts/*.cmd text eol=crlf

@@ -17,6 +17,18 @@ writing-assistant --version
 
 也可以直接使用本仓库的 `./scripts/writing-assistant`。公开发行包提供一个可选的写作 skill。需要时，将 `skills/writing-assistant/` 注册到自己选用的 harness。[安装 skill](docs/operations.md#install-a-skill)
 
+### 在 Windows 上运行此分支
+
+在已安装 Python 3.13 或更高版本的电脑上，从本分支源码目录打开 PowerShell，运行以下命令。Windows 改动尚待原生系统验证，已发布的 v0.3.1 安装包早于这些改动。
+
+```powershell
+$wa = '.\scripts\writing-assistant.cmd'
+& $wa doctor
+& $wa --book 'books\创作作品\渡灯' init '渡灯'
+```
+
+[Windows 书库和 skill 配置](docs/operations.md#windows-book-files-and-skills)
+
 <a id="start-writing"></a>
 ## 开始写作
 

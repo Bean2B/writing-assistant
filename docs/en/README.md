@@ -18,4 +18,16 @@ writing-assistant --book books/example prepare 'Plan three opening chapters' --p
 
 From a source checkout use `./scripts/writing-assistant`. The optional writing skill can be registered with your chosen harness. See [installation](../operations.md#install-a-skill), [chapter dossiers](../world-and-records.md#chapter-dossiers), [source recall](../study-and-recall.md), [reader trials](../reader-trials.md) and [model tasks](../task-runtime.md). For the wheel installation, the skill, its installer and manuals live under `share/writing-assistant/` in the virtual environment. Activate the environment before using its scripts.
 
+### Windows source checkout
+
+Use Python 3.13 or newer and open PowerShell in the root of this branch.
+
+```powershell
+$wa = '.\scripts\writing-assistant.cmd'
+& $wa doctor
+& $wa --book 'books\example' init 'Example'
+```
+
+The published v0.3.1 downloads predate these changes. Native Windows validation is pending. See [Windows book files and skills](../operations.md#windows-book-files-and-skills).
+
 Version 0.3.1 changes the CLI and storage format from public 0.1.x. Keep the old installation and a backup when moving work. The [record importer](../prior-creative-records.md) transfers an explicitly selected prior Creative Record.

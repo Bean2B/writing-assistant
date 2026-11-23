@@ -8,6 +8,7 @@ import sqlite3
 import tempfile
 
 from .. import book
+from ..filesystem import publish_new
 
 
 def register(subs):
@@ -78,5 +79,5 @@ def execute(args):
             if check.execute("PRAGMA integrity_check").fetchone()[0] != "ok" or check.execute("PRAGMA foreign_key_check").fetchone():
                 raise ValueError("Snapshot integrity check failed.")
         checksum = digest(snapshot)
-        os.link(snapshot, dest)
+        publish_new(snapshot, dest)
     return {"path": str(dest), "sha256": checksum}

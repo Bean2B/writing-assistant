@@ -4,8 +4,6 @@ import json
 import os
 from pathlib import Path
 import re
-import subprocess
-import sys
 import uuid
 
 from ..story import records, world
@@ -122,7 +120,7 @@ def finish(directory, args):
                 choice = sorted(packet["actions"])[0]
             else:
                 path = result_path(directory, row["attempt"])
-                if path.is_symlink() or not path.is_file():
+                if tasks.linked(path) or not path.is_file():
                     raise DecisionFailure("receipt_unavailable")
                 stored = tasks.bounded_json(path, limit=16 * 1024 * 1024)
                 if not isinstance(stored, dict):
@@ -176,13 +174,11 @@ def launch_or_recover(args):
                        (attempt, args.run, args.id))
         if runner:
             request = {"format": "writing-assistant/actor-decision/1", "attempt": attempt, **packet}
-            worker = Path(__file__).with_name("task_worker.py")
             # A world executable receives no provider key, account handle, application path or session input.
-            env = {k: os.environ[k] for k in ("PATH", "LANG", "LC_ALL", "TMPDIR") if k in os.environ}
+            env = {k: os.environ[k] for k in {"PATH", "LANG", "LC_ALL", "TMPDIR"} | tasks.WINDOWS_PROCESS_ENV if k in os.environ}
             try:
-                subprocess.run([sys.executable, "-I", str(worker), str(runner), str(result_path(args.book, attempt)),
-                                str(plan["timeout"])], pass_fds=(lock,), start_new_session=True, env=env,
-                               input=records.json_bytes(request), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                tasks.dispatch_worker(lock, runner, result_path(args.book, attempt), plan["timeout"],
+                                      records.json_bytes(request), env)
             except OSError:
                 pass  # Recovery observes the existing claim; it cannot launch a replacement.
         return finish(args.book, args)

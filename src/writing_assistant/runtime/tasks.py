@@ -1,7 +1,6 @@
 """Book-scoped, immutable model task plans and local process execution."""
 import argparse
-from contextlib import closing, contextmanager
-import fcntl
+from contextlib import ExitStack, closing, contextmanager
 import hashlib
 import json
 import os
@@ -13,8 +12,11 @@ import sys
 import uuid
 
 from .. import book
+from ..filesystem import exclusive_file, linked
 from ..story import chapter_cards, records
 from .task_worker import MAX_RESPONSE
+
+WINDOWS_PROCESS_ENV = {"SYSTEMROOT", "WINDIR", "TEMP", "TMP", "PATHEXT"} if os.name == "nt" else set()
 
 COMMANDS = {"task", "workflow"}
 SCHEMA = """
@@ -121,6 +123,8 @@ def executable(path):
     path = path.resolve(strict=True)
     if not path.is_file() or not os.access(path, os.X_OK):
         raise ValueError("Runner must be an executable file.")
+    if os.name == "nt" and path.suffix.lower() not in (".exe", ".py") and path.name != "writing-assistant-provider":
+        raise ValueError("Choose a native .exe, Python .py, or the bundled provider runner on Windows.")
     return path
 
 
@@ -375,7 +379,7 @@ def materialize(directory, ident):
 
 def private_dir(directory):
     path = directory.resolve() / ".writing-tasks"
-    if path.is_symlink():
+    if linked(path):
         raise ValueError("Task receipt directory must be local to the book.")
     path.mkdir(mode=0o700, exist_ok=True)
     return path
@@ -384,15 +388,30 @@ def private_dir(directory):
 @contextmanager
 def worker_lock(directory):
     path = private_dir(directory) / "worker.lock"
-    fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
-    try:
+    with ExitStack() as locks:
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            handle = locks.enter_context(exclusive_file(path, wait=False))
         except BlockingIOError:
             raise ValueError("A local worker is still active.") from None
-        yield fd
+        yield handle
+
+
+def dispatch_worker(handle, runner, path, timeout, request, environment):
+    worker = Path(__file__).with_name("task_worker.py")
+    command = [sys.executable, "-I", str(worker), str(runner), str(path), str(timeout)]
+    options = {"pass_fds": (handle,), "start_new_session": True}
+    if os.name == "nt":
+        import _winapi
+        process = _winapi.GetCurrentProcess()
+        inherited = _winapi.DuplicateHandle(process, handle, process, 0, True, _winapi.DUPLICATE_SAME_ACCESS)
+        startup = subprocess.STARTUPINFO(lpAttributeList={"handle_list": [inherited]})
+        options = {"startupinfo": startup, "creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+    try:
+        subprocess.run(command, input=request, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       env=environment, **options)
     finally:
-        os.close(fd)
+        if os.name == "nt":
+            _winapi.CloseHandle(inherited)
 
 
 def bounded_json(path, limit=MAX_RESPONSE):
@@ -409,7 +428,7 @@ def settle_local(directory, ident):
         if row["state"] == "running":
             file = private_dir(directory) / (row["attempt"] + ".json")
             fault = "dispatch_uncertain"
-            if file.is_file() and not file.is_symlink():
+            if file.is_file() and not linked(file):
                 try:
                     # Worker writes only an atomically finished JSON result.
                     obj = json.loads(file.read_bytes())
@@ -427,7 +446,7 @@ def settle_local(directory, ident):
     if result["state"] != "running":
         # The database now owns the successful response or terminal fault.
         file = private_dir(directory) / (row["attempt"] + ".json") if row["attempt"] else None
-        if file and file.exists() and not file.is_symlink():
+        if file and file.exists() and not linked(file):
             file.unlink(missing_ok=True)
     return result
 
@@ -464,15 +483,15 @@ def launch(args):
         if not local:
             return {**summary(row), "desktop_request": request}
         path = private_dir(args.book) / (attempt + ".json")
-        worker = Path(__file__).with_name("task_worker.py")
         try:
             portable = {"HOME", "PATH", "CODEX_HOME", "TMPDIR", "LANG", "LC_ALL"}
             secret = {"deepseek": "DEEPSEEK_API_KEY", "claude": "ANTHROPIC_API_KEY", "gemini": "GEMINI_API_KEY"}
+            portable.update(WINDOWS_PROCESS_ENV)
+            if os.name == "nt" and config["provider"] == "codex":
+                portable.update({"USERPROFILE", "LOCALAPPDATA", "APPDATA"})
             portable.add(secret.get(config["provider"]))
             environment = {k: v for k, v in os.environ.items() if k in portable}
-            subprocess.run([sys.executable, "-I", str(worker), str(runner), str(path), str(config["timeout_seconds"])],
-                           input=canonical(request).encode(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                           pass_fds=(fd,), start_new_session=True, env=environment, check=False)
+            dispatch_worker(fd, runner, path, config["timeout_seconds"], canonical(request).encode(), environment)
         except OSError:
             pass  # The persisted claim must be reconciled even when spawn fails.
         return settle_local(args.book, args.id)

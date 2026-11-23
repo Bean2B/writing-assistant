@@ -1,6 +1,5 @@
 """Local candidate inspection and coordinator-bound Git admission."""
 import contextlib
-import fcntl
 import hashlib
 import json
 import os
@@ -10,6 +9,8 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+
+from ..filesystem import exclusive_file, file_identity
 
 
 COMMANDS = {"engineering"}
@@ -54,7 +55,7 @@ def oid(repo, name):
 
 def common_dir(repo):
     root = Path(repo).resolve(strict=True)
-    common = Path(os.fsdecode(git(root, "rev-parse", "--path-format=absolute", "--git-common-dir").rstrip(b"\n")))
+    common = Path(os.fsdecode(git(root, "rev-parse", "--path-format=absolute", "--git-common-dir").rstrip(b"\r\n")))
     if not common.is_dir():
         raise ValueError("Git repository unavailable.")
     return root, common.resolve(strict=True)
@@ -107,8 +108,7 @@ class Coordinator:
         file = self.store / "engineering.sqlite3"
         if not initialize and not file.is_file():
             raise ValueError("Engineering repository is not enrolled.")
-        with (self.store / "engineering.lock").open("a+b") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+        with exclusive_file(self.store / "engineering.lock"):
             db = sqlite3.connect(file)
             db.row_factory = sqlite3.Row
             try:
@@ -141,16 +141,14 @@ class Coordinator:
             elif admission:
                 raise ValueError("Found an admission ref without its trusted registry.")
             else:
-                st = self.common.stat()
-                db.execute("INSERT INTO repos VALUES(?,?,?,?,NULL)", (self.identity, st.st_dev, st.st_ino, main))
+                db.execute("INSERT INTO repos VALUES(?,?,?,?,NULL)", (self.identity, *file_identity(self.common), main))
         return {"base": main, "admission": admission}
 
     def _entry(self, db):
         row = db.execute("SELECT * FROM repos WHERE repo=?", (self.identity,)).fetchone()
         if not row:
             raise ValueError("Engineering repository is not enrolled.")
-        st = self.common.stat()
-        if (st.st_dev, st.st_ino) != (row["device"], row["inode"]):
+        if file_identity(self.common) != (row["device"], row["inode"]):
             raise ValueError("Enrolled Git directory identity changed.")
         return row
 
