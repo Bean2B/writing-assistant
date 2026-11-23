@@ -40,6 +40,12 @@ writing-assistant --book "$book" prepare '先规划开篇三章' --phase plan-bo
 
 有了正文和章卡后，用 `save 1 --file chapter.md --card card.json` 一起保存。用 `chapter 1` 查看该稿的档案，`context 2` 准备下一章交接。普通书库操作在本地运行。选择模型任务并执行时，选定的内容会送给配置的提供商。
 
+### 阅读与书架
+
+在本分支中，创建或还原到 `books/创作作品/` 或 `books/学习样本/` 的书会自动登记到 `books/README.md` 的对应分类。打开书内的 `目录.html` 即可离线阅读。每章优先显示已采纳稿，没有已采纳稿时显示最新草稿。
+
+运行 `writing-assistant bookshelf books` 可补登旧书、保留手写简介，并生成 `books/书架.html`。需要单独刷新一本书时，使用 `writing-assistant --book DIR reading-page`。
+
 [章卡示例](docs/world-and-records.md#chapter-dossiers) · [长篇回读](docs/study-and-recall.md) · [读者盲读](docs/reader-trials.md) · [模型任务](docs/task-runtime.md) · [备份与恢复](docs/operations.md) · [版本变化](CHANGELOG.md) · [安全与隐私](SECURITY.md)
 
 从公开版 0.1.x 升级时，请保留旧环境和资料备份。0.3.1 使用新的 CLI 和书库格式，已选取的旧版 Creative Record 可逐条导入。[迁移说明](docs/prior-creative-records.md)

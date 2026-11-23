@@ -30,4 +30,10 @@ $wa = '.\scripts\writing-assistant.cmd'
 
 The published v0.3.1 downloads predate these changes. Native Windows validation is pending. See [Windows book files and skills](../operations.md#windows-book-files-and-skills).
 
+### Reading pages and shelf index
+
+In this branch, creating or restoring a book under `books/创作作品/` or `books/学习样本/` registers its reading link in the corresponding section of `books/README.md`. Open the book’s `目录.html` to read its adopted chapter revisions offline. Chapters with no adopted revision show their latest draft.
+
+Run `writing-assistant bookshelf books` to add missing entries, retain hand-written descriptions and build `books/书架.html`. Use `writing-assistant --book DIR reading-page` to refresh one book.
+
 Version 0.3.1 changes the CLI and storage format from public 0.1.x. Keep the old installation and a backup when moving work. The [record importer](../prior-creative-records.md) transfers an explicitly selected prior Creative Record.

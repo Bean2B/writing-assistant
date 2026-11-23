@@ -45,6 +45,8 @@
     "src/writing_assistant/operations/engineering.py",
     "src/writing_assistant/operations/exchange.py",
     "src/writing_assistant/operations/host.py",
+    "src/writing_assistant/operations/reading_pages.py",
+    "src/writing_assistant/operations/shelf_index.py",
     "src/writing_assistant/research/__init__.py",
     "src/writing_assistant/research/library.py",
     "src/writing_assistant/research/study.py",
@@ -64,6 +66,7 @@
     "src/writing_assistant/story/world_life.py",
     "src/writing_assistant/writing_test.py",
     "templates/book/opening-brief.md",
+    "templates/book/reading.css",
     "templates/book/scene-input.md",
     "templates/book/writing-assistant-outline.md"
   ]

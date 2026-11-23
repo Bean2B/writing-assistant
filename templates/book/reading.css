@@ -1,0 +1,50 @@
+:root {
+  color-scheme: light;
+  --paper: #faf8f2;
+  --ink: #282923;
+  --muted: #65665d;
+  --line: #d6d4c7;
+  --accent: #904332;
+  --serif: "STIX Two Text", "Songti SC", "Noto Serif CJK SC", SimSun, Georgia, serif;
+  font: 100%/1.65 system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0 auto; padding: 0 clamp(1rem, 4vw, 4.5rem) 4rem; max-width: 79rem; background: var(--paper); color: var(--ink); }
+a { color: inherit; text-decoration-color: var(--line); text-underline-offset: .24em; }
+a:hover, a:focus-visible { color: var(--accent); text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+header { padding: clamp(2rem, 6vw, 5rem) 0 1.7rem; border-bottom: 2px solid var(--ink); }
+h1, h2, h3 { font-family: var(--serif); text-wrap: pretty; overflow-wrap: anywhere; }
+h1 { font-size: clamp(2.5rem, 6vw, 4.8rem); font-weight: 600; line-height: 1.2; margin: .28em 0 .2em; }
+h2 { font-size: 1.75rem; line-height: 1.45; margin: .25em 0 .9em; }
+h3 { font-size: 1.15rem; }
+.meta, .home, .back { color: var(--muted); font-size: .86rem; }
+.home, .back { text-decoration: none; }
+.layout { display: grid; grid-template-columns: minmax(12rem, 15.5rem) minmax(0, 45rem); gap: clamp(2rem, 6vw, 5.5rem); align-items: start; }
+nav { position: sticky; top: 0; max-height: 96vh; overflow: auto; padding: 2rem .8rem 1rem 0; }
+nav h2 { font-size: 1.15rem; }
+nav ol { list-style: none; padding: 0; margin: 0; }
+nav a, .shelf a { display: block; text-decoration: none; padding: .48em .25em; }
+nav li + li, .shelf li + li { border-top: 1px solid var(--line); }
+article { padding: 2.3rem 0 2rem; border-bottom: 1px solid var(--line); scroll-margin-top: 1rem; }
+.prose, .study { font: 1.14rem/1.95 var(--serif); overflow-wrap: anywhere; }
+.prose { white-space: pre-wrap; }
+.study li { margin: 1em 0; }
+.study p { margin: .4em 0; }
+footer { margin-top: 1.8rem; }
+.shelf { display: grid; grid-template-columns: 2fr 1fr; gap: clamp(2rem, 7vw, 6rem); }
+.shelf section { padding: 2rem 0; }
+.shelf ul { list-style: none; margin: 0; padding: 0; }
+.shelf a { font: 1.3rem/1.55 var(--serif); }
+.shelf a::after { content: "↗"; float: right; color: var(--accent); font: 1rem system-ui; }
+@media (max-width: 48rem) {
+  .layout, .shelf { display: block; }
+  nav { position: static; max-height: 15rem; padding: 1rem .4rem; border-bottom: 1px solid var(--line); }
+  .prose, .study { font-size: 1.06rem; }
+}
+@media print {
+  body { background: white; padding: 0; }
+  .layout, .shelf { display: block; }
+  nav, .back, .home { display: none; }
+  article + article { break-before: page; }
+}

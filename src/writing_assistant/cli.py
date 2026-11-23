@@ -9,7 +9,7 @@ import subprocess
 import zipfile
 
 from . import __version__, book, writing_test
-from .operations import backup, engineering, host
+from .operations import backup, engineering, host, reading_pages
 from .research import library
 from .story import chapter_cards
 from .runtime import tasks, world_adapter
@@ -78,6 +78,8 @@ def arguments(argv):
     p.add_argument("--sha256", required=True, help="digest of the manuscript sent")
     p.add_argument("--file", type=Path, help="UTF-8 response, or stdin when omitted")
     subs.add_parser("upgrade", help="upgrade an existing local book in one transaction")
+    subs.add_parser("reading-page", help="refresh the local HTML reading page for this book")
+    subs.add_parser("bookshelf", help="build offline reading pages for a local shelf").add_argument("root", type=Path)
     subs.add_parser("doctor", help="report local runtime capabilities without model calls")
     for retired in ("merge", "queue", "closeout"):
         subs.add_parser(retired, help="report retired cloud operation")
@@ -162,7 +164,7 @@ def main(argv=None):
             result = {"product": "Writing Assistant", "version": __version__, "schema": book.SCHEMA_VERSION,
                       "python": sys.version.split()[0], "sqlite": sqlite3.sqlite_version,
                       "provider_calls": 0, "features": sorted({c for module in BOOK_FEATURES for c in module.COMMANDS}
-                                         | tasks.COMMANDS | world_adapter.COMMANDS | {"chapter", "host", "library", "backup", "restore", "engineering"})}
+                                         | tasks.COMMANDS | world_adapter.COMMANDS | {"chapter", "host", "library", "backup", "restore", "engineering", "reading-page", "bookshelf"})}
         elif args.command in {"merge", "queue", "closeout"}:
             result = {"command": args.command, "status": "retired", "dispatched": False}
         elif args.command == "engineering":
@@ -171,8 +173,12 @@ def main(argv=None):
             result = host.execute(args)
         elif args.command == "library":
             result = library.execute(args)
+        elif args.command == "bookshelf":
+            result = reading_pages.build_shelf(args.root.resolve())
         elif args.book is None:
             raise ValueError("Select a book directory with --book DIR.")
+        elif args.command == "reading-page":
+            result = reading_pages.refresh(args.book.resolve())
         elif args.command in {"backup", "restore"}:
             result = backup.execute(args)
         elif args.command in world_adapter.COMMANDS:
@@ -213,6 +219,7 @@ def main(argv=None):
                     result = {"schema": book.SCHEMA_VERSION}
                 else:
                     result = run(db, args)
+        reading_pages.refresh_after_write(args, result)
         if isinstance(result, bytes):
             sys.stdout.buffer.write(result)
         else:
