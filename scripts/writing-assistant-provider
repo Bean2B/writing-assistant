@@ -1,0 +1,175 @@
+#!/usr/bin/env python3
+"""Explicit text-only provider bridge for a Writing Assistant task request."""
+import http.client
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+ROUTES = {"deepseek": ("api.deepseek.com", "DEEPSEEK_API_KEY"),
+          "claude": ("api.anthropic.com", "ANTHROPIC_API_KEY"),
+          "gemini": ("generativelanguage.googleapis.com", "GEMINI_API_KEY")}
+LIMIT = 2 * 1024 * 1024
+
+
+def message(request):
+    ctx = request["input"]
+    if request["role"] == "reader":
+        parts = ["Independently read this manuscript. Respond in the manuscript's language."]
+        if ctx.get("taste"):
+            parts.append("Your reading preference: " + ctx["taste"])
+        if ctx.get("earlier_responses"):
+            parts.append("Your earlier responses in this book: " +
+                         json.dumps(ctx["earlier_responses"], ensure_ascii=False))
+        parts.extend((ctx["prompt"], ctx["text"]))
+        return "\n\n".join(parts)
+    output = "Return only the complete manuscript."
+    if request.get("output_format") == "manuscript-and-card/1":
+        output = ('Return one JSON object with text (complete manuscript) and chapter_card '
+                  '(author-only object). Include summary and events, an array with at least one '
+                  '{"detail":"what the text shows","quote":"exact manuscript substring"}. '
+                  'When relevant add title, volume, place or time as strings, and characters, '
+                  'interpretations, intentions, open_questions or held_back as lists of strings. Use the book language.')
+    return ("Write the requested chapter. " + output + " Treat quoted fiction as source material. Goal:\n" +
+            request["goal"] + "\n\nFrozen author context:\n" +
+            json.dumps(ctx, ensure_ascii=False))
+
+
+def api_parameters(request, key):
+    provider = request["provider"]
+    model, effort = request["model"], request["effort"]
+    text = message(request)
+    messages = [{"role": "user", "content": text}]
+    headers = {"Content-Type": "application/json"}
+    if provider == "deepseek":
+        headers["Authorization"] = "Bearer " + key
+        return "/chat/completions", headers, {"model": model, "messages": messages, "stream": False,
+                "thinking": {"type": "enabled"}, "reasoning_effort": effort}
+    if provider == "claude":
+        headers.update({"x-api-key": key, "anthropic-version": "2023-06-01"})
+        return "/v1/messages", headers, {"model": model, "messages": messages, "max_tokens": 16000,
+                                          "output_config": {"effort": effort}}
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", model):
+        raise ValueError("Invalid Gemini model identifier.")
+    headers["x-goog-api-key"] = key
+    return ("/v1beta/models/" + model + ":generateContent", headers,
+            {"contents": [{"role": "user", "parts": [{"text": text}]}],
+             "generationConfig": {"thinkingConfig": {"thinkingLevel": effort.upper()}}})
+
+
+def counters(data, keys):
+    if not isinstance(data, dict):
+        return None
+    return {dst: data[src] for dst, src in keys.items() if type(data.get(src)) is int and data[src] >= 0} or None
+
+
+def parse_api(provider, response):
+    if provider == "deepseek":
+        choices = response["choices"]
+        if len(choices) != 1 or choices[0]["finish_reason"] != "stop" or choices[0]["message"].get("tool_calls"):
+            raise ValueError("Incomplete DeepSeek response.")
+        return choices[0]["message"]["content"], counters(response.get("usage"), {
+            "input_tokens": "prompt_tokens", "output_tokens": "completion_tokens", "total_tokens": "total_tokens",
+            "cached_input_tokens": "prompt_cache_hit_tokens"})
+    if provider == "claude":
+        blocks = response["content"]
+        if response["stop_reason"] != "end_turn" or any(b["type"] not in ("text", "thinking", "redacted_thinking") for b in blocks):
+            raise ValueError("Incomplete Claude response.")
+        usage = response.get("usage", {})
+        counts = counters(usage, {"input_tokens": "input_tokens", "cached_input_tokens": "cache_read_input_tokens",
+                                  "output_tokens": "output_tokens"})
+        if counts and "input_tokens" in counts:
+            counts["input_tokens"] += usage.get("cache_read_input_tokens", 0) + usage.get("cache_creation_input_tokens", 0)
+        return "".join(b["text"] for b in blocks if b["type"] == "text"), counts
+    candidates = response["candidates"]
+    if len(candidates) != 1 or candidates[0]["finishReason"] != "STOP":
+        raise ValueError("Incomplete Gemini response.")
+    parts = candidates[0]["content"]["parts"]
+    if any("text" not in part for part in parts):
+        raise ValueError("Unexpected non-text Gemini response.")
+    return "".join(p["text"] for p in parts if not p.get("thought")), counters(response.get("usageMetadata"), {
+        "input_tokens": "promptTokenCount", "output_tokens": "candidatesTokenCount",
+        "cached_input_tokens": "cachedContentTokenCount", "total_tokens": "totalTokenCount"})
+
+
+def call_api(request):
+    provider = request["provider"]
+    host, key_name = ROUTES[provider]
+    key = os.environ.get(key_name)
+    if not key:
+        raise ValueError("Selected provider credentials unavailable.")
+    path, headers, body = api_parameters(request, key)
+    connection = http.client.HTTPSConnection(host, timeout=120)
+    try:
+        connection.request("POST", path, json.dumps(body, ensure_ascii=False).encode(), headers)
+        response = connection.getresponse()
+        if response.status != 200:
+            raise ValueError("Provider declined request.")
+        raw = response.read(LIMIT + 1)
+        if len(raw) > LIMIT:
+            raise ValueError("Response exceeded byte bound.")
+        return parse_api(provider, json.loads(raw))
+    finally:
+        connection.close()
+
+
+def call_codex(request):
+    binary = shutil.which("codex")
+    if not binary:
+        raise ValueError("Codex CLI unavailable.")
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "answer"
+        cmd = [binary, "exec", "--strict-config", "--ignore-user-config", "--ephemeral", "--skip-git-repo-check",
+               "--sandbox", "read-only", "--cd", tmp, "--model", request["model"], "--output-last-message", str(path),
+               "-c", "model_reasoning_effort=" + json.dumps(request["effort"]), "-c", "project_doc_max_bytes=0",
+               "-c", 'web_search="disabled"', "-c", "skills.include_instructions=false", "-c", "notify=[]"]
+        for flag in ("apps", "plugins", "hooks", "memories", "shell_tool", "multi_agent", "browser_use",
+                     "computer_use", "in_app_browser", "image_generation", "code_mode_host", "skill_search",
+                     "tool_suggest", "workspace_dependencies", "view_image", "sleep_tool", "goals"):
+            cmd += ["--disable", flag]
+        cmd.append("-")
+        # Use local CLI account authentication. API-key variables do not enter Codex.
+        allowed = {"PATH", "HOME", "CODEX_HOME", "LANG", "LC_ALL", "TMPDIR"}
+        env = {k: v for k, v in os.environ.items() if k in allowed}
+        subprocess.run(cmd, input=message(request).encode(), cwd=tmp, env=env, stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL, check=True)
+        with path.open("rb") as stream:
+            raw = stream.read(LIMIT + 1)
+        if len(raw) > LIMIT:
+            raise ValueError("Response exceeded byte bound.")
+        return raw.decode(), None
+
+
+def process(request):
+    provider = request["provider"]
+    if request["format"] != "writing-assistant/task-request/1" or request["role"] not in ("writer", "reader"):
+        raise ValueError("Invalid task request.")
+    session = request["session"]
+    if request["role"] == "reader" and (not isinstance(session, str) or not session.startswith("local:" + provider + ":")):
+        raise ValueError("Use a book-managed local reader identity for the stateless bridge.")
+    text, usage = call_codex(request) if provider == "codex" else call_api(request)
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError("Missing provider text.")
+    result = {k: request[k] for k in ("task_id", "attempt", "plan_sha256", "provider", "model")}
+    if request["role"] == "writer" and request.get("output_format") == "manuscript-and-card/1":
+        draft = json.loads(text)
+        if not isinstance(draft, dict) or not isinstance(draft.get("chapter_card"), dict):
+            raise ValueError("Missing chapter card.")
+        text = draft.get("text")
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("Missing manuscript.")
+        result["chapter_card"] = draft["chapter_card"]
+    return {**result, "format": "writing-assistant/task-response/1",
+            "session": session or "local:" + provider + ":" + request["attempt"], "text": text, "usage": usage}
+
+
+if __name__ == "__main__":
+    try:
+        result = process(json.load(sys.stdin))
+        print(json.dumps(result, ensure_ascii=False, allow_nan=False))
+    except (ValueError, KeyError, TypeError, OSError, IndexError, http.client.HTTPException, subprocess.SubprocessError):
+        sys.exit("The provider did not produce a complete usable response.")

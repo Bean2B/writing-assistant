@@ -1,31 +1,9 @@
-# 版本记录 / Changelog
+# Release history / 版本记录
 
-[中文](#中文) · [English](#english)
+## 0.3.1
 
-## 中文
+章节现在可把正文与带原句证据的章卡按稿次一起保存。读者反馈可定位到收到的稿次。开书规划、连续性便签、分场检索和有序盲读在同一本书内进行。写作 skill 由使用者在选定的 harness 中按需注册。
 
-### [0.1.1](https://github.com/Bean2B/writing-assistant/releases/tag/v0.1.1)
+The book-scoped CLI supports revision-bound chapter cards, opening briefs, scene recall and fixed reader packets. Model tasks run through an explicitly selected provider. The optional writing skill is registered separately by the user. Back up older 0.1.x projects before moving to the new storage format.
 
-本版本提供以下面向 Agent 的写作能力：
-
-- **构思、写作与修订**：通过 Codex 处理选定材料，保存生成稿件与审读反馈。
-- **章节流程**：组织规划、正文和审读任务，保存阶段依赖和中断进度。
-- **创作资料管理**：保存、检索、修订和书签定位灵感、设定与稿件。
-- **Story state 与技法**：整理人物、关系及事件，为当前任务选择上下文和技法包。
-- **角色行动推演**：请求角色决策，推进日程与状态，保存选定的角色可见信息。
-
-支持 Apple Silicon macOS、Python 3.12 和[列出的 Codex CLI 版本](docs/codex-support.md)。安装及升级见[安装指南](docs/install.md)与[下载说明](docs/release.md)。
-
-## English
-
-### [0.1.1](https://github.com/Bean2B/writing-assistant/releases/tag/v0.1.1)
-
-This version provides the following writing capabilities for Agents:
-
-- **Develop, write and revise**: use Codex with selected material and retain generated drafts and review feedback.
-- **Chapter workflows**: organize planning, drafting and review with saved dependencies and interruption progress.
-- **Creative records**: save, search, revise and bookmark ideas, settings and manuscripts.
-- **Story state and techniques**: organize characters, relationships and events, and select context and technique packs for a task.
-- **Character action simulation**: request character decisions, advance schedules and state, and save selected character-visible information.
-
-Supports Apple Silicon macOS, Python 3.12 and the [listed Codex CLI versions](docs/codex-support.md#english). See [Install](docs/install.md#english) and [Downloads](docs/release.md#english) for setup and upgrades.
+[Earlier release history / 早期版本记录](https://github.com/Bean2B/writing-assistant/blob/v0.1.1/CHANGELOG.md)

@@ -1,0 +1,13 @@
+{
+  "public": {
+    "lamp": "off"
+  },
+  "actors": {
+    "keeper": {
+      "profile": "Keeps the store open until sunset."
+    },
+    "visitor": {
+      "profile": "Looks for the posted hours."
+    }
+  }
+}

@@ -5,6 +5,8 @@ dist/
 build/
 *.egg-info/
 .writing-assistant/
+books/
+.local/
 .env
 .env.*
 *.pem

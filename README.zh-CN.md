@@ -1,5 +1,3 @@
-# Writing Assistant
+# Writing Assistant 中文说明
 
-中文首页已整合到 [README](README.md)，包含功能介绍、快速上手与常见问题。
-
-[查看中文首页](README.md) · [English](docs/en/README.md)
+[中文使用指南](README.md) · [English guide](docs/en/README.md)

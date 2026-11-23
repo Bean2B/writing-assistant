@@ -1,0 +1,15 @@
+{
+  "format": "writing-assistant/library/1",
+  "items": [
+    {
+      "id": "market-town",
+      "category": "worlds",
+      "label": "Market town (fictional example)",
+      "path": "worlds/market-town/scenario.json",
+      "sha256": "72b5bd7241076b0141e3b12383d441dd7964df67a39b8c21268bc27fe817d7f9",
+      "source": {
+        "origin": "Original fictional example for the public documentation."
+      }
+    }
+  ]
+}

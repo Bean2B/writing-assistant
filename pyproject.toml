@@ -5,7 +5,7 @@ backend-path = ["."]
 
 [project]
 name = "writing-assistant"
-version = "0.1.1"
+version = "0.3.1"
 description = "AI-powered writing application for Agents, developed by Codex"
 requires-python = ">=3.12"
 dependencies = []

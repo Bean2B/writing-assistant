@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+"""Run the local Writing Assistant CLI using the Python standard library."""
+from pathlib import Path
+import sys
+
+sys.dont_write_bytecode = True
+source_dir = Path(__file__).resolve().parents[1] / "src"
+if source_dir.is_dir():
+    sys.path.insert(0, str(source_dir))
+from writing_assistant.cli import main
+
+if __name__ == "__main__":
+    sys.exit(main())

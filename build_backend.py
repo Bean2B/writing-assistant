@@ -28,7 +28,7 @@ EXCLUDED_PATHS = frozenset({
 PRIVATE_PARTS = frozenset({
     "private", "private-data", "private_data", "personal", "corpus", "corpora",
     "manuscript", "manuscripts", "training", "training-data", "training_data",
-    "dataset", "datasets", "credentials", "secrets", "telemetry", "logs",
+    "books", ".local", "writing-assistant-developer", "dataset", "datasets", "credentials", "secrets", "telemetry", "logs",
     "runs", "outputs", ".ssh", ".aws", ".venv", "node_modules", "__pycache__",
 })
 BLOCKED_SUFFIXES = frozenset({
@@ -101,6 +101,8 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
         else:
             target = f"{NAME}-{VERSION}.data/data/share/writing-assistant/{path}"
         entries[target] = raw
+        if path.startswith(("templates/book/", "data/")):
+            entries[f"{NAME}/resources/{path}"] = raw
     entries[f"{DIST_INFO}/licenses/LICENSE"] = source_files["LICENSE"]
     entries[f"{DIST_INFO}/METADATA"] = metadata()
     entries[f"{DIST_INFO}/WHEEL"] = b"Wheel-Version: 1.0\nGenerator: writing-assistant\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
@@ -118,7 +120,8 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
         for path, raw in sorted(entries.items()):
             info = zipfile.ZipInfo(path, date_time=(1980, 1, 1, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED
-            info.external_attr = 0o100644 << 16
+            executable = raw.startswith(b"#!/") and "/scripts/" in path
+            info.external_attr = (0o100755 if executable else 0o100644) << 16
             archive.writestr(info, raw)
     return name
 
@@ -134,7 +137,7 @@ def build_sdist(sdist_directory, config_settings=None):
                 for path, raw in sorted(entries.items()):
                     info = tarfile.TarInfo(f"{NAME}-{VERSION}/{path}")
                     info.size = len(raw)
-                    info.mode = 0o644
+                    info.mode = 0o755 if path.startswith("scripts/") and raw.startswith(b"#!/") else 0o644
                     info.mtime = 0
                     archive.addfile(info, io.BytesIO(raw))
     return name
